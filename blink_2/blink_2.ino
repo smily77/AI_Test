@@ -13,7 +13,7 @@
 // Define the pin connected to the LED.
 // LED_BUILTIN is a convenient constant that refers to the on-board LED.
 // On Arduino Uno, this is digital pin 13.
-const int ledPin = LED_BUILTIN; // The pin connected to the built-in LED
+const int ledPin = 13; // The pin connected to the built-in LED
 
 // --- Setup Function ---
 // The setup() function runs once when the sketch starts or after a reset.
