@@ -14,7 +14,7 @@
 // --- LovyanGFX Display Setup ---
 // Create an instance of the LGFX_Device class for the display,
 // automatically configured by CYD_Display_Config.h for the CYD 2.8" board.
-lgfx::LGFX_Device display;
+LGFX display;
 
 // --- WiFi and NTP Client Setup ---
 // UDP client for NTP (Network Time Protocol)
@@ -68,13 +68,6 @@ void setup() {
   // The CYD_Display_Config.h typically defines TFT_BL (GPIO32) and configures LovyanGFX to control it via PWM.
   // However, sometimes explicit digital control is needed to ensure the backlight is activated,
   // especially if there are timing issues or specific board variations.
-  #ifdef TFT_BL
-    pinMode(TFT_BL, OUTPUT);
-    digitalWrite(TFT_BL, HIGH); // Set backlight to high (full brightness)
-    Serial.println("Backlight activated.");
-  #else
-    Serial.println("Warning: TFT_BL not defined. Cannot explicitly control backlight.");
-  #endif
 
   // Set rotation to 1 for landscape orientation.
   // (0=portrait, 1=landscape, 2=inverted portrait, 3=inverted landscape)
