@@ -1,83 +1,35 @@
-// Required Library: TFT_eSPI
-// This library can be installed via the Arduino Library Manager.
-// Search for "TFT_eSPI" and install the version by Bodmer.
-//
-// Board configuration for the "CYD 2.8 ESP32 DEV board" is included directly in this sketch.
-// This is achieved by defining USER_SETUP_LOADED before including TFT_eSPI.h,
-// and then providing all necessary TFT_eSPI configuration #defines.
+// Required Libraries:
+// 1. LovyanGFX (install via Arduino Library Manager, search for "LovyanGFX" by lovyan03)
+// 2. CYD_Display_Config.h (This is a custom configuration file specific to CYD boards.
+//    It's usually provided as part of a board support package or needs to be placed
+//    in your sketch folder or a library path if not part of a standard library.)
+//    Please ensure this header file is available to your project.
 
-#define USER_SETUP_LOADED // This ensures that TFT_eSPI uses our custom setup below
+#include <LovyanGFX.hpp> // Include the core LovyanGFX library
+#include <CYD_Display_Config.h> // Include the CYD board specific configuration file
 
-// Define the display driver for ILI9341
-#define ILI9341_DRIVER
-
-// Define the SPI pins for the CYD 2.8 ESP32 board
-// These pins are typical for the ESP32 connected to an ILI9341 display
-#define TFT_MISO 12
-#define TFT_MOSI 13
-#define TFT_SCLK 14
-#define TFT_CS   15  // Chip Select for the TFT
-#define TFT_DC   2   // Data/Command pin
-#define TFT_RST  4   // Reset pin (can be tied to Arduino RESET pin if not needed)
-
-// Backlight pin (may vary, 21 is common for CYD boards, 22 or 23 are also possible)
-#define TFT_BL   21  // Backlight control pin
-
-// --- ESP32 Specific Configuration for TFT_eSPI ---
-// It's crucial for ESP32 stability and performance to explicitly define the SPI bus, frequency, and DMA usage.
-
-// SPI clock frequency. 27MHz is a good balance for stability and speed.
-// You can try higher frequencies like 40000000 or 80000000 if stable on your setup,
-// but 27MHz is a safer starting point to prevent potential timing issues or crashes.
-#define SPI_FREQUENCY  27000000
-
-// Optional: Set a read frequency if you need to read from the display (e.g., screen capture).
-// Not strictly needed for this gradient sketch, but good for a complete setup.
-#define SPI_READ_FREQUENCY  20000000
-
-// Enable DMA (Direct Memory Access) for faster transfers on ESP32.
-// This is highly recommended for smooth graphics and can prevent CPU bottlenecks.
-// Explicitly defining SPI_DMA_CHANNEL is the most robust way to enable DMA for TFT_eSPI on ESP32.
-// For the VSPI bus, DMA Channel 2 is typically used.
-#define SPI_DMA_CHANNEL 2
-
-// Define the screen dimensions (these are physical dimensions, rotation will swap width/height if needed)
-#define TFT_WIDTH  240
-#define TFT_HEIGHT 320
-
-// Optional: Define touch screen pins if a touch screen is present and you want to use it
-// #define TOUCH_CS 33 // Touch Chip Select (e.g., for XPT2046)
-
-// End of TFT_eSPI custom setup
-#include <TFT_eSPI.h> // Include the graphics library
-// The <SPI.h> library is not strictly necessary here, as TFT_eSPI handles its own SPI configuration
-// based on the #defines provided in this custom setup file.
-
-// Create a TFT_eSPI object.
-// With USER_SETUP_LOADED and all SPI pins/settings defined, TFT_eSPI will manage the SPI bus internally.
-// There's no need to explicitly pass an SPIClass object like &VSPI, as TFT_eSPI uses these definitions.
-TFT_eSPI tft;
+// Create a global LGFX object.
+// The CYD_Display_Config.h file is expected to define a class named LGFX
+// which inherits from lgfx::LGFX_Device and configures it for the CYD 2.8 board.
+static LGFX tft;
 
 void setup() {
   Serial.begin(115200); // Initialize serial communication for debugging
-  Serial.println("Starting CYD 2.8 ESP32 gradient sketch...");
+  Serial.println("Starting CYD 2.8 ESP32 gradient sketch with LovyanGFX...");
 
-  // Removed the explicit VSPI.begin() call.
-  // TFT_eSPI's tft.init() function will automatically configure the SPI bus
-  // using the TFT_MISO, TFT_MOSI, TFT_SCLK, SPI_FREQUENCY, and SPI_DMA_CHANNEL #defines.
-  
-  tft.init();         // Initialize the TFT screen
-  tft.setRotation(1); // Set screen rotation: 0 = Portrait, 1 = Landscape, 2 = Reverse Portrait, 3 = Reverse Landscape
-                      // For this sketch, landscape (width 320, height 240) is chosen to make a horizontal gradient clear.
+  // Initialize the TFT screen using LovyanGFX.
+  // tft.begin() automatically applies the configuration defined in CYD_Display_Config.h,
+  // including SPI pins, frequency, DMA, and backlight settings.
+  tft.begin();
 
-  // Optional: Enable backlight. If TFT_BL is defined, set it to output and HIGH.
-  // Note: Some boards might control backlight differently (e.g., via PWM or inverted logic).
-  if (TFT_BL != -1) { // Check if backlight pin is defined
-    pinMode(TFT_BL, OUTPUT);
-    digitalWrite(TFT_BL, HIGH); // Turn on backlight (HIGH is usually ON)
-  }
+  // Set screen rotation: 0 = Portrait, 1 = Landscape, 2 = Reverse Portrait, 3 = Reverse Landscape
+  // For this sketch, landscape (width 320, height 240) is chosen to make a horizontal gradient clear.
+  tft.setRotation(1);
 
-  tft.fillScreen(TFT_BLACK); // Clear the screen to black
+  // LovyanGFX typically handles backlight control internally if configured in CYD_Display_Config.h.
+  // No explicit pinMode/digitalWrite is usually needed here.
+
+  tft.fillScreen(BLACK); // Clear the screen to black using LovyanGFX's color constant
 
   drawBlueGradient(); // Draw the blue gradient once in setup
 }
@@ -94,18 +46,18 @@ void drawBlueGradient() {
 
   // Define start and end colors for the gradient in RGB (0-255)
   // These will be converted to 16-bit RGB565 by tft.color565()
-  
+
   // Start color: Very Dark Blue
   byte startR = 0;
   byte startG = 0;
   byte startB = 30; // A subtle dark blue
-  
+
   // End color: Very Light Blue (almost cyan/sky blue)
   byte endR = 100;
   byte endG = 200;
   byte endB = 255; // A bright, light blue
 
-  int screenWidth = tft.width(); // Get the actual screen width based on rotation
+  int screenWidth = tft.width();   // Get the actual screen width based on rotation
   int screenHeight = tft.height(); // Get the actual screen height based on rotation
 
   // Iterate through each column of the screen
@@ -117,6 +69,7 @@ void drawBlueGradient() {
     byte currentB = map(x, 0, screenWidth - 1, startB, endB);
 
     // Create the 16-bit color (RGB565 format) from the calculated R, G, B values
+    // LovyanGFX also provides color565() for direct RGB565 conversion.
     uint16_t gradientColor = tft.color565(currentR, currentG, currentB);
 
     // Draw a vertical line for the current column with the calculated color
