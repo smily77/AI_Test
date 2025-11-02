@@ -9,6 +9,7 @@
 #include <Credentials.h>        // User-defined file containing WiFi credentials:
                                 // const char* ssid = "your_SSID";
                                 // const char* password = "your_PASSWORD";
+#include <algorithm>            // Required for std::min (though often included indirectly)
 
 // --- LovyanGFX Display Setup ---
 // Create an instance of the LGFX_Device class for the display,
@@ -53,11 +54,30 @@ void connectWiFi() {
 void setup() {
   Serial.begin(115200);
 
-  // Initialize LovyanGFX display
-  display.begin();
+  // Initialize LovyanGFX display.
+  // It's good practice to check if the initialization was successful.
+  if (!display.begin()) {
+    Serial.println("Error: Display initialization failed! Please check hardware connections and CYD_Display_Config.h.");
+    // Halt execution if the display cannot be initialized.
+    while (true) {
+      delay(100);
+    }
+  }
+
+  // Explicitly turn on the backlight.
+  // The CYD_Display_Config.h typically defines TFT_BL (GPIO32) and configures LovyanGFX to control it via PWM.
+  // However, sometimes explicit digital control is needed to ensure the backlight is activated,
+  // especially if there are timing issues or specific board variations.
+  #ifdef TFT_BL
+    pinMode(TFT_BL, OUTPUT);
+    digitalWrite(TFT_BL, HIGH); // Set backlight to high (full brightness)
+    Serial.println("Backlight activated.");
+  #else
+    Serial.println("Warning: TFT_BL not defined. Cannot explicitly control backlight.");
+  #endif
+
   // Set rotation to 1 for landscape orientation.
   // (0=portrait, 1=landscape, 2=inverted portrait, 3=inverted landscape)
-  display.setBrightness(255);
   display.setRotation(1);
   // Clear the entire screen to black before drawing anything
   display.fillScreen(TFT_BLACK);
@@ -69,9 +89,6 @@ void setup() {
   timeClient.begin();
   // Ensure the first time update is successful before proceeding
   while (!timeClient.update()) {
-    // Original error: 'class NTPClient' has no member named 't_begin'
-    // The NTPClient's update() method is robust enough to retry on its own.
-    // No need to call a non-existent method or re-call begin() here.
     Serial.println("Failed to get time from NTP server, retrying...");
     delay(1500); // Wait a bit before trying again
   }
@@ -115,7 +132,10 @@ void loop() {
   // This prevents the text from being cut off on either dimension.
   float finalScale = std::min(scaleX, scaleY) * 0.95; // 0.95 for a 5% margin
 
-  // 4. Apply the calculated scale to the display
+  // 4. Apply the calculated scale to the display.
+  // For bitmap fonts like FreeSansBold24pt7b, if finalScale evaluates to < 1.0,
+  // LovyanGFX might internally round it to 1 or even 0. Ensure it's at least 1.
+  if (finalScale < 1.0f) finalScale = 1.0f;
   display.setTextSize(finalScale);
 
   // --- Displaying the Time ---
