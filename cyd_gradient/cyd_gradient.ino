@@ -27,6 +27,7 @@
 // It's crucial for ESP32 stability and performance to explicitly define the SPI bus, frequency, and DMA usage.
 
 // Define the SPI bus to use. VSPI (SPI2) is commonly used for TFTs on ESP32.
+// TFT_eSPI will internally map this to VSPI_HOST for the ESP32 SPI API.
 #define TFT_SPI_PORT VSPI
 
 // Set SPI clock frequency. 27MHz is a good balance for stability and speed.
@@ -40,9 +41,10 @@
 
 // Enable DMA (Direct Memory Access) for faster transfers on ESP32.
 // This is highly recommended for smooth graphics and can prevent CPU bottlenecks.
-// The 'assert failed: xQueueSemaphoreTake' error is often related to DMA or SPI timing issues,
-// and explicitly enabling/configuring DMA can resolve it.
-#define DMA_ATTEMPT_TRANSFER
+// The 'assert failed: xQueueSemaphoreTake' error is often related to DMA or SPI timing issues.
+// Explicitly defining SPI_DMA_CHANNEL is the most robust way to enable DMA for TFT_eSPI on ESP32.
+// For the VSPI bus (TFT_SPI_PORT VSPI), DMA Channel 2 is typically used.
+#define SPI_DMA_CHANNEL 2
 
 // Define the screen dimensions (these are physical dimensions, rotation will swap width/height if needed)
 #define TFT_WIDTH  240
