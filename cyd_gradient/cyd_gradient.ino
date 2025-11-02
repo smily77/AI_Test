@@ -26,11 +26,7 @@
 // --- ESP32 Specific Configuration for TFT_eSPI ---
 // It's crucial for ESP32 stability and performance to explicitly define the SPI bus, frequency, and DMA usage.
 
-// Define the SPI bus to use. VSPI (SPI2) is commonly used for TFTs on ESP32.
-// TFT_eSPI will internally map this to VSPI_HOST for the ESP32 SPI API.
-#define TFT_SPI_PORT VSPI
-
-// Set SPI clock frequency. 27MHz is a good balance for stability and speed.
+// SPI clock frequency. 27MHz is a good balance for stability and speed.
 // You can try higher frequencies like 40000000 or 80000000 if stable on your setup,
 // but 27MHz is a safer starting point to prevent potential timing issues or crashes.
 #define SPI_FREQUENCY  27000000
@@ -43,7 +39,7 @@
 // This is highly recommended for smooth graphics and can prevent CPU bottlenecks.
 // The 'assert failed: xQueueSemaphoreTake' error is often related to DMA or SPI timing issues.
 // Explicitly defining SPI_DMA_CHANNEL is the most robust way to enable DMA for TFT_eSPI on ESP32.
-// For the VSPI bus (TFT_SPI_PORT VSPI), DMA Channel 2 is typically used.
+// For the VSPI bus, DMA Channel 2 is typically used.
 #define SPI_DMA_CHANNEL 2
 
 // Define the screen dimensions (these are physical dimensions, rotation will swap width/height if needed)
@@ -55,13 +51,21 @@
 
 // End of TFT_eSPI custom setup
 #include <TFT_eSPI.h> // Include the graphics library
+#include <SPI.h>      // Include the SPI library explicitly for VSPI object
 
-TFT_eSPI tft = TFT_eSPI(); // Create a TFT_eSPI object
+// Create a TFT_eSPI object and explicitly tell it to use the VSPI bus.
+// By passing &VSPI, we ensure TFT_eSPI uses the global VSPI object,
+// which we will explicitly initialize in setup().
+TFT_eSPI tft = TFT_eSPI(&VSPI);
 
 void setup() {
   Serial.begin(115200); // Initialize serial communication for debugging
   Serial.println("Starting CYD 2.8 ESP32 gradient sketch...");
 
+  // Explicitly initialize the VSPI bus with the correct pins.
+  // The CS pin is set to -1 because TFT_eSPI manages TFT_CS directly for the display device.
+  VSPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, -1);
+  
   tft.init();         // Initialize the TFT screen
   tft.setRotation(1); // Set screen rotation: 0 = Portrait, 1 = Landscape, 2 = Reverse Portrait, 3 = Reverse Landscape
                       // For this sketch, landscape (width 320, height 240) is chosen to make a horizontal gradient clear.
