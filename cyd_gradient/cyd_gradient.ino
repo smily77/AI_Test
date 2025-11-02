@@ -23,7 +23,28 @@
 // Backlight pin (may vary, 21 is common for CYD boards, 22 or 23 are also possible)
 #define TFT_BL   21  // Backlight control pin
 
-// Define the screen dimensions
+// --- ESP32 Specific Configuration for TFT_eSPI ---
+// It's crucial for ESP32 stability and performance to explicitly define the SPI bus, frequency, and DMA usage.
+
+// Define the SPI bus to use. VSPI (SPI2) is commonly used for TFTs on ESP32.
+#define TFT_SPI_PORT VSPI
+
+// Set SPI clock frequency. 27MHz is a good balance for stability and speed.
+// You can try higher frequencies like 40000000 or 80000000 if stable on your setup,
+// but 27MHz is a safer starting point to prevent potential timing issues or crashes.
+#define SPI_FREQUENCY  27000000
+
+// Optional: Set a read frequency if you need to read from the display (e.g., screen capture).
+// Not strictly needed for this gradient sketch, but good for a complete setup.
+#define SPI_READ_FREQUENCY  20000000
+
+// Enable DMA (Direct Memory Access) for faster transfers on ESP32.
+// This is highly recommended for smooth graphics and can prevent CPU bottlenecks.
+// The 'assert failed: xQueueSemaphoreTake' error is often related to DMA or SPI timing issues,
+// and explicitly enabling/configuring DMA can resolve it.
+#define DMA_ATTEMPT_TRANSFER
+
+// Define the screen dimensions (these are physical dimensions, rotation will swap width/height if needed)
 #define TFT_WIDTH  240
 #define TFT_HEIGHT 320
 
