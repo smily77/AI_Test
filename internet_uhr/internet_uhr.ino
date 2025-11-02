@@ -12,8 +12,9 @@
 #include <algorithm>            // Required for std::min (though often included indirectly)
 
 // --- IMPORTANT: Include the specific font header for FreeSansBold72pt7b ---
-// This font is typically provided within the LovyanGFX library's "lgfx_fonts" directory.
-#include <LGFX_Fonts/lgfx_font_FreeSansBold72pt7b.h>
+// This font is typically provided within the LovyanGFX library's "src/lgfx_fonts" directory.
+// The include path needs to match the actual directory structure.
+#include <lgfx_fonts/lgfx_font_FreeSansBold72pt7b.h>
 
 // --- LovyanGFX Display Setup ---
 // Create an instance of the LGFX_Device class for the display,
@@ -96,7 +97,6 @@ void setup() {
   display.setTextColor(TFT_YELLOW, TFT_BLACK); // Yellow text on a black background
   // Use a much larger, bold font for better visibility and "straight edges".
   // FreeSansBold72pt7b is a good choice for large, clear numbers.
-  // --- FIX: Corrected font reference for LovyanGFX ---
   display.setFont(&lgfx_font_FreeSansBold72pt7b);
   // Set text datum to Middle Center for easy centering of the text on the screen.
   display.setTextDatum(MC_DATUM);
