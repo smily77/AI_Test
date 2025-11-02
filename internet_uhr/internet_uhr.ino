@@ -57,6 +57,7 @@ void setup() {
   display.begin();
   // Set rotation to 1 for landscape orientation.
   // (0=portrait, 1=landscape, 2=inverted portrait, 3=inverted landscape)
+  display.setBrightness(255);
   display.setRotation(1);
   // Clear the entire screen to black before drawing anything
   display.fillScreen(TFT_BLACK);
