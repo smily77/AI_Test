@@ -29,7 +29,7 @@ void setup() {
   // LovyanGFX typically handles backlight control internally if configured in CYD_Display_Config.h.
   // No explicit pinMode/digitalWrite is usually needed here.
 
-  tft.fillScreen(BLACK); // Clear the screen to black using LovyanGFX's color constant
+  tft.fillScreen(tft.color565(0, 0, 0)); // Clear the screen to black using LovyanGFX's color conversion
 
   drawBlueGradient(); // Draw the blue gradient once in setup
 }
