@@ -68,7 +68,9 @@ void setup() {
   timeClient.begin();
   // Ensure the first time update is successful before proceeding
   while (!timeClient.update()) {
-    timeClient.t_begin(); // Reset UDP port in case of failure to update
+    // Original error: 'class NTPClient' has no member named 't_begin'
+    // The NTPClient's update() method is robust enough to retry on its own.
+    // No need to call a non-existent method or re-call begin() here.
     Serial.println("Failed to get time from NTP server, retrying...");
     delay(1500); // Wait a bit before trying again
   }
