@@ -37,7 +37,6 @@
 
 // Enable DMA (Direct Memory Access) for faster transfers on ESP32.
 // This is highly recommended for smooth graphics and can prevent CPU bottlenecks.
-// The 'assert failed: xQueueSemaphoreTake' error is often related to DMA or SPI timing issues.
 // Explicitly defining SPI_DMA_CHANNEL is the most robust way to enable DMA for TFT_eSPI on ESP32.
 // For the VSPI bus, DMA Channel 2 is typically used.
 #define SPI_DMA_CHANNEL 2
@@ -51,20 +50,21 @@
 
 // End of TFT_eSPI custom setup
 #include <TFT_eSPI.h> // Include the graphics library
-#include <SPI.h>      // Include the SPI library explicitly for VSPI object
+// The <SPI.h> library is not strictly necessary here, as TFT_eSPI handles its own SPI configuration
+// based on the #defines provided in this custom setup file.
 
-// Create a TFT_eSPI object and explicitly tell it to use the VSPI bus.
-// By passing &VSPI, we ensure TFT_eSPI uses the global VSPI object,
-// which we will explicitly initialize in setup().
-TFT_eSPI tft = TFT_eSPI(&VSPI);
+// Create a TFT_eSPI object.
+// With USER_SETUP_LOADED and all SPI pins/settings defined, TFT_eSPI will manage the SPI bus internally.
+// There's no need to explicitly pass an SPIClass object like &VSPI, as TFT_eSPI uses these definitions.
+TFT_eSPI tft;
 
 void setup() {
   Serial.begin(115200); // Initialize serial communication for debugging
   Serial.println("Starting CYD 2.8 ESP32 gradient sketch...");
 
-  // Explicitly initialize the VSPI bus with the correct pins.
-  // The CS pin is set to -1 because TFT_eSPI manages TFT_CS directly for the display device.
-  VSPI.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, -1);
+  // Removed the explicit VSPI.begin() call.
+  // TFT_eSPI's tft.init() function will automatically configure the SPI bus
+  // using the TFT_MISO, TFT_MOSI, TFT_SCLK, SPI_FREQUENCY, and SPI_DMA_CHANNEL #defines.
   
   tft.init();         // Initialize the TFT screen
   tft.setRotation(1); // Set screen rotation: 0 = Portrait, 1 = Landscape, 2 = Reverse Portrait, 3 = Reverse Landscape
