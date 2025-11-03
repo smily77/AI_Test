@@ -7,7 +7,7 @@
 
 // Pin definition for the internal NeoPixel on ESP32-S3-DevKitC-1.
 // For the ESP32-S3-DevKitC-1, the addressable RGB LED is commonly connected to GPIO 48.
-#define PIN_NEOPIXEL 48
+#define PIN_NEOPIXEL 34
 // Number of pixels in the strip. The ESP32-S3-DevKitC-1 has one internal RGB LED pixel.
 #define NUM_PIXELS 1
 
@@ -19,7 +19,7 @@
 //   NEO_BRG    Pixels are wired for BRG bitstream
 //   NEO_KHZ800 800 KHz bitstream (most WS2812B/NeoPixels are 800KHz)
 //   NEO_KHZ400 400 KHz (older WS2811 pixels)
-Adafruit_NeoPixel pixels(NUM_PIXELS, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels(NUM_PIXELS, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ400);
 
 // Delay between color changes in milliseconds. Adjust for faster or slower transitions.
 #define DELAY_MS 20
