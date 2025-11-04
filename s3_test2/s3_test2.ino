@@ -9,7 +9,7 @@
 // For the ESP32-S3-DevKitC-1, the addressable RGB LED is commonly connected to GPIO 48.
 // This pin will be used by the main loop() function.
 // The setup() function will first iterate through various pins to help you identify the correct one.
-#define NEOPIXEL_DEFAULT_PIN 48 
+#define NEOPIXEL_DEFAULT_PIN 25
 
 // Number of pixels in the strip. The ESP32-S3-DevKitC-1 has one internal RGB LED pixel.
 #define NUM_PIXELS 1
