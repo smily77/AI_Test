@@ -3,20 +3,19 @@
 // 2. LovyanGFX Library (https://github.com/lovyan03/LovyanGFX): For TFT display control.
 //    Install via Arduino Library Manager: Search for "LovyanGFX".
 // 3. CYD_Display_Config.h (User-provided configuration file): This file is crucial.
-//    It is expected to define and configure the LGFX_Device object (e.g., named 'lcd')
-//    for the specific TFT display connected to the ESP32-S3, including resolution and touch.
-//    Ensure this header file is in your sketch folder or a library path for compilation.
+//    It is expected to define a custom LGFX class (e.g., named 'LGFX') that inherits from
+//    lgfx::LGFX_Device and contains the specific configuration (resolution, pins, touch, etc.)
+//    for the TFT display connected to the ESP32-S3. Ensure this header file is in your
+//    sketch folder or a library path for compilation.
 
 #include <Wire.h>             // Include the I2C communication library
-#include <CYD_Display_Config.h> // Include the LovyanGFX display configuration file
+#include <CYD_Display_Config.h> // Include the custom LovyanGFX display configuration file.
 
-// LovyanGFX object instance.
-// This object is used to control the TFT display. 
-// The 'CYD_Display_Config.h' file is expected to configure its parameters (like resolution, pins, etc.).
-// If 'CYD_Display_Config.h' does not explicitly define an 'LGFX_Device' object named 'lcd',
-// we must declare it here to avoid a 'not declared in this scope' error.
-// The class name for the display object is LGFX_Device (as confirmed by the 'BTW' note).
-LGFX_Device lcd;
+// IMPORTANT: The 'lcd' object (instance of the custom LGFX class) is now declared
+// directly in the main sketch, as per user requirement. The 'CYD_Display_Config.h'
+// file is expected to define the 'LGFX' class itself, which contains all the
+// necessary display hardware configurations in its constructor.
+LGFX lcd; // Declare the LovyanGFX display object globally.
 
 // I2C Pin definitions for ESP32-S3 Dev Board
 // As specified in the user request: SDA on pin 1, SCL on pin 2.
@@ -54,13 +53,34 @@ uint8_t readPCF8574(uint8_t address) {
  *        is present, displaying results on both the TFT and Serial Monitor.
  */
 void setup() {
-    // Initialize Serial communication for debugging output
+    // Initialize Serial communication FIRST for debugging output.
+    // A check is added to wait for the Serial Monitor to be connected.
     Serial.begin(115200);
+    while (!Serial) {
+        // On ESP32, Serial can be ready before the monitor connects. Wait a bit.
+        // A small delay or a timeout can be used, but a blocking wait is typical for initial debug.
+        delay(10); 
+    }
     Serial.println("ESP32-S3 I2C Scanner and PCF8574 Monitor");
+    Serial.println("--------------------------------------");
 
-    // Initialize the TFT display using the configuration from CYD_Display_Config.h
-    // The 'lcd' object must be declared globally for these functions to be accessible.
-    lcd.init();
+    // Initialize the I2C bus with the specified SDA and SCL pins.
+    // This should also happen before display init if the display uses I2C for touch.
+    Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+    Serial.printf("I2C initialized on SDA: %d, SCL: %d\n", I2C_SDA_PIN, I2C_SCL_PIN);
+
+    // Initialize the TFT display using the configuration from CYD_Display_Config.h.
+    // The 'lcd' object is now instantiated globally as 'LGFX lcd;'
+    Serial.println("Initializing TFT display...");
+    if (!lcd.init()) {
+        // If lcd.init() fails, it's likely a misconfiguration in CYD_Display_Config.h
+        // or hardware issue. The program cannot proceed without a working display.
+        Serial.println("ERROR: TFT display initialization failed! Check CYD_Display_Config.h and wiring.");
+        Serial.println("Halting program.");
+        while (true) { /* Halt */ }
+    }
+    Serial.println("TFT display initialized successfully.");
+
     // Set display rotation (adjust as needed: 0=portrait, 1=landscape, 2=inverted portrait, 3=inverted landscape)
     lcd.setRotation(1);
     // Set display brightness (0-255, where 255 is maximum brightness)
@@ -77,9 +97,6 @@ void setup() {
     lcd.setCursor(0, 0);       // Set cursor to the top-left corner of the display
     lcd.println("Starting I2C Scan...");
     Serial.println("Starting I2C Scan...");
-
-    // Initialize the I2C bus with the specified SDA and SCL pins
-    Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
 
     byte error, address;
     int nDevices = 0; // Counter to keep track of the number of found I2C devices
@@ -148,7 +165,7 @@ void setup() {
         // Move the cursor down and change text color for the PCF8574 status message
         lcd.setCursor(0, lcd.getCursorY() + 20);
         lcd.setTextColor(TFT_GREEN); // Set text color to green for this message
-        lcd.printf("Monitoring PCF8574 at 0x%02X:", pcf8574Address);
+        lcd.printf("Monitoring PCF8574 at 0x%02X:\n", pcf8574Address);
         Serial.printf("Monitoring PCF8574 at 0x%02X:\n", pcf8574Address);
         lcd.setTextColor(TFT_WHITE); // Reset text color back to white
     } else {
@@ -194,7 +211,12 @@ void loop() {
         lcd.println(); // Move to the next line (though it will be cleared in the next loop)
 
         // Also print the PCF8574 input state to the Serial Monitor in binary format
-        Serial.printf("PCF8574 Inputs: %s\n", String(inputState, BIN).c_str());
+        char buffer[10]; // 8 bits + space + null terminator
+        for (int i = 7; i >= 0; i--) {
+            buffer[7-i] = ((inputState >> i) & 0x01) ? '1' : '0';
+        }
+        buffer[8] = '\0';
+        Serial.printf("PCF8574 Inputs: %s\n", buffer);
     }
 
     // Introduce a small delay to prevent rapid screen updates, which can cause flickering,
