@@ -11,12 +11,12 @@
 #include <CYD_Display_Config.h> // Include the LovyanGFX display configuration file
 
 // LovyanGFX object instance.
-// This is typically defined by 'CYD_Display_Config.h' (e.g., as 'LGFX_Device lcd;').
-// If you encounter a 'lcd not declared in this scope' error during compilation,
-// you might need to uncomment and explicitly define it here or adjust the name
-// to match what's defined in your specific 'CYD_Display_Config.h' file.
-// For example:
-// LGFX_Device lcd;
+// This object is used to control the TFT display. 
+// The 'CYD_Display_Config.h' file is expected to configure its parameters (like resolution, pins, etc.).
+// If 'CYD_Display_Config.h' does not explicitly define an 'LGFX_Device' object named 'lcd',
+// we must declare it here to avoid a 'not declared in this scope' error.
+// The class name for the display object is LGFX_Device (as confirmed by the 'BTW' note).
+LGFX_Device lcd;
 
 // I2C Pin definitions for ESP32-S3 Dev Board
 // As specified in the user request: SDA on pin 1, SCL on pin 2.
@@ -59,6 +59,7 @@ void setup() {
     Serial.println("ESP32-S3 I2C Scanner and PCF8574 Monitor");
 
     // Initialize the TFT display using the configuration from CYD_Display_Config.h
+    // The 'lcd' object must be declared globally for these functions to be accessible.
     lcd.init();
     // Set display rotation (adjust as needed: 0=portrait, 1=landscape, 2=inverted portrait, 3=inverted landscape)
     lcd.setRotation(1);
