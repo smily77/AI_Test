@@ -113,11 +113,24 @@ void displayGPSInfo() {
     }
 
   } else {
-    // If no valid GPS fix, display a waiting message
+    // If no valid GPS fix, display a waiting message and satellite count if available
     lcd.setFont(&fonts::Font4);
     lcd.setTextColor(TFT_YELLOW, TFT_BLACK);
     lcd.setCursor(0, lcd.fontHeight() * 3); // Position below "GPS Info"
     lcd.println("\n  Waiting for\n   GPS Fix...");
+    
+    // Display satellite count while waiting for a fix
+    lcd.setFont(&fonts::Font2); // Revert to a smaller font for satellite info
+    lcd.setTextColor(TFT_WHITE, TFT_BLACK);
+    lcd.print("\n  Sat: ");
+    if (gps.satellites.isValid()) {
+      lcd.println(gps.satellites.value()); // Display number of satellites
+    } else {
+      lcd.println("---"); // Indicate no valid satellite data yet
+    }
+    
+    lcd.setFont(&fonts::Font4); // Revert back to larger font for "No valid data"
+    lcd.setTextColor(TFT_YELLOW, TFT_BLACK);
     lcd.println("\n   No valid\n    data.");
   }
 }
