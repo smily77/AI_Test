@@ -104,24 +104,28 @@ void setup() {
   lcd.init();
   // Set to portrait mode.
   // 0 (portrait), 1 (landscape), 2 (inverted portrait), 3 (inverted landscape).
-  lcd.setRotation(0); // Changed to portrait mode as requested
+  lcd.setRotation(0); // Set to portrait mode
   lcd.fillScreen(TFT_BG_COLOR); // Clear screen with black
   lcd.setTextColor(TFT_TEXT_COLOR, TFT_BG_COLOR); // Set text color to green with black background
-  lcd.setTextSize(1); // Changed to text size 1 for initial messages to fit portrait width
+  lcd.setTextSize(2); // Changed to text size 2 for initial messages for better readability
   Serial.println("OK");
 
   // Calculate compass drawing parameters based on display dimensions
+  // The compass radius is reduced to make space for larger cardinal direction text (N, E, S, W).
+  // An estimated height for setTextSize(2) font (e.g., 8x16 font, scaled by 2 -> 16 pixels height).
+  int estimatedCharHeightSize2 = 16;
+  int minCompassMargin = estimatedCharHeightSize2 + 10; // Buffer for cardinal points + a small safety margin
   compassCenterX = lcd.width() / 2;
   compassCenterY = lcd.height() / 2;
-  compassRadius = min(lcd.width(), lcd.height()) / 2 - 20; // 20 pixel margin
+  compassRadius = min(lcd.width(), lcd.height()) / 2 - minCompassMargin; 
   pointerLength = compassRadius - 10; // Pointers are slightly shorter than the compass radius
 
-  // Display initial messages on TFT, adjusted for setTextSize(1) and portrait layout
-  int lineHeight = lcd.fontHeight() + 5; // Height of text + a small margin
+  // Display initial messages on TFT, adjusted for setTextSize(2) and portrait layout
+  int lineHeight = lcd.fontHeight() + 5; // Height of text (now size 2) + a small margin
   lcd.setCursor(5, 5);
   lcd.println("Initializing sensors...");
   lcd.setCursor(5, 5 + lineHeight);
-  lcd.println("Waiting for BNO calibration...");
+  lcd.println("Waiting for BNO cal..."); // Shortened message to fit on smaller screens
   lcd.setCursor(5, 5 + 2 * lineHeight);
   lcd.println("Waiting for GPS fix...");
 
@@ -146,7 +150,7 @@ void loop() {
   // If the sensor is mounted upside down, its reported yaw will be 180 degrees off
   // AND its rotation direction will be reversed. The formula (180 - original_yaw) 
   // correctly handles both the 180-degree offset and the reversal of direction.
-  bno_heading = fmod((180.0 - bno_heading), 360.0); // Corrected line
+  bno_heading = fmod((180.0 - bno_heading), 360.0);
   if (bno_heading < 0) bno_heading += 360.0; // Ensure positive angle [0, 360)
 
   // Get BNO055 calibration status
@@ -162,25 +166,24 @@ void loop() {
   // Draw Compass Rose
   lcd.drawCircle(compassCenterX, compassCenterY, compassRadius, TFT_COMPASS_COLOR);
 
-  // Draw cardinal points (N, E, S, W)
-  // Using setTextSize(1) for cardinal points to fit portrait width and match status text.
-  lcd.setTextSize(1);
+  // Draw cardinal points (N, E, S, W) - Text size increased for readability
+  lcd.setTextSize(2); 
   lcd.setTextColor(TFT_COMPASS_COLOR);
-  int charHeight1 = lcd.fontHeight(); // Get height of current font (size 1)
-  int cardinalMargin = 3; // Small margin for cardinal points from the circle edge
+  int charHeight_size2 = lcd.fontHeight(); // Get height of current font (size 2)
+  int cardinalMargin = 5; // Small margin for cardinal points from the circle edge
 
   // N: Centered above the circle
   int nWidth = lcd.textWidth("N");
-  lcd.setCursor(compassCenterX - nWidth / 2, compassCenterY - compassRadius - charHeight1 - cardinalMargin); lcd.print("N");
+  lcd.setCursor(compassCenterX - nWidth / 2, compassCenterY - compassRadius - charHeight_size2 - cardinalMargin); lcd.print("N");
   // E: Right of the circle, vertically centered
   int eWidth = lcd.textWidth("E");
-  lcd.setCursor(compassCenterX + compassRadius + cardinalMargin, compassCenterY - charHeight1 / 2); lcd.print("E");
+  lcd.setCursor(compassCenterX + compassRadius + cardinalMargin, compassCenterY - charHeight_size2 / 2); lcd.print("E");
   // S: Centered below the circle
   int sWidth = lcd.textWidth("S");
   lcd.setCursor(compassCenterX - sWidth / 2, compassCenterY + compassRadius + cardinalMargin); lcd.print("S");
   // W: Left of the circle, vertically centered
   int wWidth = lcd.textWidth("W");
-  lcd.setCursor(compassCenterX - compassRadius - wWidth - cardinalMargin, compassCenterY - charHeight1 / 2); lcd.print("W");
+  lcd.setCursor(compassCenterX - compassRadius - wWidth - cardinalMargin, compassCenterY - charHeight_size2 / 2); lcd.print("W");
 
   // --- Draw BNO055 Pointer ---
   // Convert BNO heading to radians.
@@ -192,12 +195,12 @@ void loop() {
   lcd.drawLine(compassCenterX, compassCenterY, bno_endX, bno_endY, TFT_BNO_COLOR);
   lcd.fillCircle(bno_endX, bno_endY, 5, TFT_BNO_COLOR); // Small circle at pointer tip
 
-  // Label for BNO pointer
-  lcd.setTextSize(1); // Already size 1
+  // Label for BNO pointer - Text size increased for readability
+  lcd.setTextSize(2); 
   lcd.setTextColor(TFT_BNO_COLOR);
   // Adjust label position dynamically based on pointer direction
   int bnoLabelWidth = lcd.textWidth("BNO");
-  lcd.setCursor(bno_endX + (bno_endX > compassCenterX ? 5 : -(bnoLabelWidth + 5)), bno_endY);
+  lcd.setCursor(bno_endX + (bno_endX > compassCenterX ? 8 : -(bnoLabelWidth + 8)), bno_endY); // Adjusted offset
   lcd.print("BNO");
 
   // --- Draw GPS Pointer ---
@@ -215,27 +218,25 @@ void loop() {
     lcd.drawLine(compassCenterX, compassCenterY, gps_endX, gps_endY, TFT_GPS_COLOR);
     lcd.fillCircle(gps_endX, gps_endY, 5, TFT_GPS_COLOR); // Small circle at pointer tip
 
-    // Label for GPS pointer
-    lcd.setTextSize(1); // Already size 1
+    // Label for GPS pointer - Text size increased for readability
+    lcd.setTextSize(2); 
     lcd.setTextColor(TFT_GPS_COLOR);
     // Adjust label position dynamically based on pointer direction
     int gpsLabelWidth = lcd.textWidth("GPS");
-    lcd.setCursor(gps_endX + (gps_endX > compassCenterX ? 5 : -(gpsLabelWidth + 5)), gps_endY + 10); // Offset Y slightly
+    lcd.setCursor(gps_endX + (gps_endX > compassCenterX ? 8 : -(gpsLabelWidth + 8)), gps_endY + 15); // Adjusted offset
     lcd.print("GPS");
   }
 
   // --- Display Status Information ---
-  lcd.setTextSize(1); // All status messages use size 1 to fit portrait width
+  // BNO055 Calibration Status (top section) - keeping size 1 to ensure it fits the screen width
+  lcd.setTextSize(1); 
   lcd.setTextColor(TFT_TEXT_COLOR);
-  int statusLineHeight = lcd.fontHeight() + 2; // Height of text + small inter-line margin
-  int bottomMargin = 5; // Margin from the bottom of the screen
-
-  // BNO055 Calibration Status (top section)
+  int statusLineHeight_size1 = lcd.fontHeight() + 2; // Height for size 1 text + small inter-line margin
   lcd.setCursor(5, 5); // First line from the top
   lcd.printf("BNO Cal: S:%d G:%d A:%d M:%d  ", sys, gyro, accel, mag); // The spaces help clear previous text
 
-  // GPS Fix Status and Satellites (second line from top)
-  lcd.setCursor(5, 5 + statusLineHeight);
+  // GPS Fix Status and Satellites (second line from top) - keeping size 1 to ensure it fits the screen width
+  lcd.setCursor(5, 5 + statusLineHeight_size1);
   if (gps.location.isValid()) {
     lcd.printf("GPS Fix: YES (%d Sats)  ", gps.satellites.value());
   } else {
@@ -243,8 +244,14 @@ void loop() {
   }
 
   // Display current headings for numerical comparison (bottom section)
+  // BNO Heading and GPS Heading will use setTextSize(2) for better readability
+  lcd.setTextSize(2); // Increased text size for numerical headings
+  lcd.setTextColor(TFT_TEXT_COLOR);
+  int charHeight_size2_for_status = lcd.fontHeight(); // Height for size 2 text
+  int bottomMargin = 5; // Margin from the bottom of the screen
+
   // GPS Heading at the very bottom
-  lcd.setCursor(5, lcd.height() - (charHeight1 + bottomMargin)); // Position relative to bottom
+  lcd.setCursor(5, lcd.height() - (charHeight_size2_for_status + bottomMargin)); // Position relative to bottom
   if (gps.course.isValid()) {
     lcd.printf("GPS Hdg: %0.1f deg  ", gps_heading);
   } else {
@@ -252,7 +259,7 @@ void loop() {
   }
 
   // BNO Heading above GPS Heading
-  lcd.setCursor(5, lcd.height() - 2 * (charHeight1 + bottomMargin)); // Two lines up from bottom
+  lcd.setCursor(5, lcd.height() - 2 * (charHeight_size2_for_status + bottomMargin)); // Two lines up from bottom
   lcd.printf("BNO Hdg: %0.1f deg  ", bno_heading);
 
   delay(100); // Update display approximately every 100ms
