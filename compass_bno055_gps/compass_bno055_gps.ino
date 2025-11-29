@@ -228,24 +228,24 @@ void loop() {
   }
 
   // --- Display Status Information ---
-  // BNO055 Calibration Status (top section) - keeping size 1 to ensure it fits the screen width
-  lcd.setTextSize(1); 
+  // BNO055 Calibration Status (top section) - MODIFIED to setTextSize(2) and shortened string to fit line length
+  lcd.setTextSize(2); // Increased text size as requested
   lcd.setTextColor(TFT_TEXT_COLOR);
-  int statusLineHeight_size1 = lcd.fontHeight() + 2; // Height for size 1 text + small inter-line margin
+  int statusLineHeight_size2 = lcd.fontHeight() + 2; // Height for size 2 text + small inter-line margin
   lcd.setCursor(5, 5); // First line from the top
-  lcd.printf("BNO Cal: S:%d G:%d A:%d M:%d  ", sys, gyro, accel, mag); // The spaces help clear previous text
+  lcd.printf("BNO:S%d G%d A%d M%d  ", sys, gyro, accel, mag); // Shortened string for setTextSize(2)
 
-  // GPS Fix Status and Satellites (second line from top) - keeping size 1 to ensure it fits the screen width
-  lcd.setCursor(5, 5 + statusLineHeight_size1);
+  // GPS Fix Status and Satellites (second line from top) - MODIFIED to setTextSize(2) and shortened string to fit line length
+  lcd.setCursor(5, 5 + statusLineHeight_size2);
   if (gps.location.isValid()) {
-    lcd.printf("GPS Fix: YES (%d Sats)  ", gps.satellites.value());
+    lcd.printf("GPS:FIX (%dSats)  ", gps.satellites.value()); // Shortened string for setTextSize(2)
   } else {
-    lcd.printf("GPS Fix: NO (%d Sats)    ", gps.satellites.value());
+    lcd.printf("GPS:NOFIX (%dSats) ", gps.satellites.value()); // Shortened string for setTextSize(2)
   }
 
   // Display current headings for numerical comparison (bottom section)
   // BNO Heading and GPS Heading will use setTextSize(2) for better readability
-  lcd.setTextSize(2); // Increased text size for numerical headings
+  lcd.setTextSize(2); // Text size remains 2 as it was already
   lcd.setTextColor(TFT_TEXT_COLOR);
   int charHeight_size2_for_status = lcd.fontHeight(); // Height for size 2 text
   int bottomMargin = 5; // Margin from the bottom of the screen
