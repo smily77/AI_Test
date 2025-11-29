@@ -25,24 +25,18 @@
 
 // GPS Module: Quectel L80-R
 // Connected to Hardware Serial 1 (Serial1) on ESP32-S3
-// IMPORTANT: The definitions below (GPS_RX_PIN, GPS_TX_PIN) refer to the ESP32's GPIO numbers.
-// The most common cause for "0 satellites" when hardware is believed functional is
-// a confusion in connecting RX/TX lines. For this fix, we are assuming a "straight-through" wiring
-// where the ESP32 pin *labeled* RX (e.g. on a breakout) might be connected to the GPS RX.
 //
-// To correct this common mistake:
-//   - ESP32's RX (data input) should receive from the GPS module's TX (data output).
-//   - ESP32's TX (data output) should transmit to the GPS module's RX (data input).
+// IMPORTANT: For UART communication, the ESP32's RX pin (data input) should connect to the GPS module's TX pin (data output),
+// and the ESP32's TX pin (data output) should connect to the GPS module's RX pin (data input).
 //
-// The code below configures Serial1 such that:
-//   ESP32's RX (UART1_RX) is assigned to GPIO 7 (GPS_TX_PIN)
-//   ESP32's TX (UART1_TX) is assigned to GPIO 8 (GPS_RX_PIN)
+// User feedback indicates: "Richtig ist an 8 kommen die Daten vom GPS." (Correct is that data from GPS comes in on 8.)
+// This means ESP32's Serial1 RX pin must be GPIO 8.
 //
-// Therefore, ensure your physical wiring is:
-//   GPS module's TX (data output) -> ESP32 GPIO 7
-//   GPS module's RX (data input) <- ESP32 GPIO 8
-#define GPS_RX_PIN 8 // This ESP32 pin is used as Serial1's TX (connected to GPS_RX)
-#define GPS_TX_PIN 7 // This ESP32 pin is used as Serial1's RX (connected to GPS_TX)
+// Therefore, the wiring and ESP32 pin definitions should be:
+//   - ESP32 GPIO 8 (configured as Serial1 RX)  <--  GPS module's TX (data output)
+//   - ESP32 GPIO 7 (configured as Serial1 TX)  -->  GPS module's RX (data input)
+#define GPS_RX_PIN 8 // This ESP32 pin is configured as Serial1's RX (receives data from GPS TX)
+#define GPS_TX_PIN 7 // This ESP32 pin is configured as Serial1's TX (transmits data to GPS RX)
 #define GPS_BAUD_RATE 9600
 
 // BNO055 IMU:
@@ -113,10 +107,11 @@ void setup() {
   bno.setExtCrystalUse(true); // Use external crystal for better accuracy
 
   // Set up HardwareSerial for GPS
-  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...\n", GPS_TX_PIN, GPS_RX_PIN, GPS_BAUD_RATE); // Log new RX/TX assignments
-  // FIX: Swapped GPS_RX_PIN and GPS_TX_PIN arguments.
-  // This configures ESP32's GPIO7 as RX and GPIO8 as TX, addressing common wiring confusion.
-  GPS_Serial.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_TX_PIN, GPS_RX_PIN);
+  // Using GPS_RX_PIN (8) as ESP32's RX and GPS_TX_PIN (7) as ESP32's TX.
+  // This aligns with user feedback that data from GPS comes in on GPIO 8.
+  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...
+", GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD_RATE); // Log new RX/TX assignments
+  GPS_Serial.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
   Serial.println("OK");
 
   // Initialize the TFT display
@@ -132,9 +127,6 @@ void setup() {
   // Create sprite with full screen dimensions. LovyanGFX will automatically try to use PSRAM
   // if LGFX_USE_PSRAM is defined in CYD_Display_Config.h or similar config.
   sprite.createSprite(lcd.width(), lcd.height());
-  // The 'usePSRAM' method does not exist for LGFX_Sprite. PSRAM usage is typically configured
-  // at a lower level or handled automatically by createSprite if PSRAM is enabled.
-  // Removed: sprite.usePSRAM(true);
   sprite.fillScreen(TFT_BG_COLOR); // Clear sprite with background color
 
   // Set initial text properties for the sprite
