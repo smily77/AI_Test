@@ -116,7 +116,7 @@ void setup() {
   Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...\n", GPS_TX_PIN, GPS_RX_PIN, GPS_BAUD_RATE); // Log new RX/TX assignments
   // FIX: Swapped GPS_RX_PIN and GPS_TX_PIN arguments.
   // This configures ESP32's GPIO7 as RX and GPIO8 as TX, addressing common wiring confusion.
-  GPS_Serial.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_TX_PIN, GPS_RX_PIN); 
+  GPS_Serial.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_TX_PIN, GPS_RX_PIN);
   Serial.println("OK");
 
   // Initialize the TFT display
@@ -286,7 +286,7 @@ void loop() {
     sprite.printf("GPS Hdg: %0.1f deg  ", gps_heading);
   } else {
     sprite.printf("GPS Hdg: --- deg    ");
-  n}
+  }
 
   // BNO Heading above GPS Heading
   sprite.setCursor(5, sprite.height() - 2 * (charHeight_size2_for_status + bottomMargin)); // Two lines up from bottom
