@@ -136,8 +136,8 @@ void setup() {
   lcd.init();
 
   // Set display rotation. Adjust the value (0, 1, 2, 3) as needed for your screen's orientation.
-  // Value 1 typically provides a landscape mode suitable for text display.
-  lcd.setRotation(1); 
+  // Value 0 typically provides a portrait mode suitable for text display.
+  lcd.setRotation(0); 
 
   // Set the default font, text size, and colors for the display.
   lcd.setFont(&fonts::Font2);
