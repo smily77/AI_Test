@@ -92,7 +92,9 @@ void setup() {
     while (1); // Halt if BNO055 is not found
   }
   Serial.println("OK");
-  bno.setExtCrystalOscForced(true); // Use external crystal for better accuracy
+  // Corrected: The function name was updated in the Adafruit BNO055 library.
+  // It changed from 'setExtCrystalOscForced' to 'setExtCrystalUse'.
+  bno.setExtCrystalUse(true); // Use external crystal for better accuracy
 
   // Set up HardwareSerial for GPS
   Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...\n", GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD_RATE);
