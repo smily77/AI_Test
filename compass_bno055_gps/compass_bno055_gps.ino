@@ -112,9 +112,8 @@ void setup() {
   // Set up HardwareSerial for GPS using the global Serial1 object
   // Using GPS_RX_PIN (8) as ESP32's RX and GPS_TX_PIN (7) as ESP32's TX.
   // These pins are confirmed by the user to be the correct setup for their board.
-  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...
-", GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD_RATE);
-  Serial1.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN); // Use Serial1 directly
+  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...\n", GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD_RATE);
+  Serial1.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
   Serial.println("OK");
 
   // Initialize the TFT display
