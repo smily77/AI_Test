@@ -131,7 +131,7 @@ void setup() {
   int minCompassMargin = estimatedCharHeightSize2 + 10; // Buffer for cardinal points + a small safety margin
   compassCenterX = lcd.width() / 2;
   compassCenterY = lcd.height() / 2;
-  compassRadius = min(lcd.width(), lcd.height()) / 2 - minCompassMargin; 
+  compassRadius = min(lcd.width(), lcd.height()) / 2 - minCompassMargin;
   pointerLength = compassRadius - 10; // Pointers are slightly shorter than the compass radius
 
   // Display initial messages on sprite, adjusted for setTextSize(2) and portrait layout
@@ -163,7 +163,7 @@ void loop() {
 
   // Adjust BNO055 heading for upside-down mounting:
   // If the sensor is mounted upside down, its reported yaw will be 180 degrees off
-  // AND its rotation direction will be reversed. The formula (180 - original_yaw) 
+  // AND its rotation direction will be reversed. The formula (180 - original_yaw)
   // correctly handles both the 180-degree offset and the reversal of direction.
   bno_heading = fmod((180.0 - bno_heading), 360.0);
   if (bno_heading < 0) bno_heading += 360.0; // Ensure positive angle [0, 360)
@@ -182,7 +182,7 @@ void loop() {
   sprite.drawCircle(compassCenterX, compassCenterY, compassRadius, TFT_COMPASS_COLOR);
 
   // Draw cardinal points (N, E, S, W) - Text size increased for readability
-  sprite.setTextSize(2); 
+  sprite.setTextSize(2);
   sprite.setTextColor(TFT_COMPASS_COLOR);
   int charHeight_size2 = sprite.fontHeight(); // Get height of current font (size 2)
   int cardinalMargin = 5; // Small margin for cardinal points from the circle edge
@@ -211,7 +211,7 @@ void loop() {
   sprite.fillCircle(bno_endX, bno_endY, 5, TFT_BNO_COLOR); // Small circle at pointer tip
 
   // Label for BNO pointer - Text size increased for readability
-  sprite.setTextSize(2); 
+  sprite.setTextSize(2);
   sprite.setTextColor(TFT_BNO_COLOR);
   // Adjust label position dynamically based on pointer direction
   int bnoLabelWidth = sprite.textWidth("BNO");
@@ -234,7 +234,7 @@ void loop() {
     sprite.fillCircle(gps_endX, gps_endY, 5, TFT_GPS_COLOR); // Small circle at pointer tip
 
     // Label for GPS pointer - Text size increased for readability
-    sprite.setTextSize(2); 
+    sprite.setTextSize(2);
     sprite.setTextColor(TFT_GPS_COLOR);
     // Adjust label position dynamically based on pointer direction
     int gpsLabelWidth = sprite.textWidth("GPS");
@@ -256,7 +256,7 @@ void loop() {
     sprite.printf("GPS:FIX (%dSats)  ", gps.satellites.value()); // Shortened string for setTextSize(2)
   } else {
     sprite.printf("GPS:NOFIX (%dSats) ", gps.satellites.value()); // Shortened string for setTextSize(2)
-
+  }
   // Display current headings for numerical comparison (bottom section)
   // BNO Heading and GPS Heading will use setTextSize(2) for better readability
   sprite.setTextSize(2); // Text size remains 2 as it was already
