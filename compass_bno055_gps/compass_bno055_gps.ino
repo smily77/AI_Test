@@ -25,10 +25,24 @@
 
 // GPS Module: Quectel L80-R
 // Connected to Hardware Serial 1 (Serial1) on ESP32-S3
-// GPS TX (data output) -> ESP32 RX (Pin 8)
-// GPS RX (data input) <- ESP32 TX (Pin 7, as updated)
-#define GPS_RX_PIN 8
-#define GPS_TX_PIN 7
+// IMPORTANT: The definitions below (GPS_RX_PIN, GPS_TX_PIN) refer to the ESP32's GPIO numbers.
+// The most common cause for "0 satellites" when hardware is believed functional is
+// a confusion in connecting RX/TX lines. For this fix, we are assuming a "straight-through" wiring
+// where the ESP32 pin *labeled* RX (e.g. on a breakout) might be connected to the GPS RX.
+//
+// To correct this common mistake:
+//   - ESP32's RX (data input) should receive from the GPS module's TX (data output).
+//   - ESP32's TX (data output) should transmit to the GPS module's RX (data input).
+//
+// The code below configures Serial1 such that:
+//   ESP32's RX (UART1_RX) is assigned to GPIO 7 (GPS_TX_PIN)
+//   ESP32's TX (UART1_TX) is assigned to GPIO 8 (GPS_RX_PIN)
+//
+// Therefore, ensure your physical wiring is:
+//   GPS module's TX (data output) -> ESP32 GPIO 7
+//   GPS module's RX (data input) <- ESP32 GPIO 8
+#define GPS_RX_PIN 8 // This ESP32 pin is used as Serial1's TX (connected to GPS_RX)
+#define GPS_TX_PIN 7 // This ESP32 pin is used as Serial1's RX (connected to GPS_TX)
 #define GPS_BAUD_RATE 9600
 
 // BNO055 IMU:
@@ -99,8 +113,10 @@ void setup() {
   bno.setExtCrystalUse(true); // Use external crystal for better accuracy
 
   // Set up HardwareSerial for GPS
-  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...\n", GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD_RATE);
-  GPS_Serial.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...\n", GPS_TX_PIN, GPS_RX_PIN, GPS_BAUD_RATE); // Log new RX/TX assignments
+  // FIX: Swapped GPS_RX_PIN and GPS_TX_PIN arguments.
+  // This configures ESP32's GPIO7 as RX and GPIO8 as TX, addressing common wiring confusion.
+  GPS_Serial.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_TX_PIN, GPS_RX_PIN); 
   Serial.println("OK");
 
   // Initialize the TFT display
@@ -270,7 +286,7 @@ void loop() {
     sprite.printf("GPS Hdg: %0.1f deg  ", gps_heading);
   } else {
     sprite.printf("GPS Hdg: --- deg    ");
-  }
+  n}
 
   // BNO Heading above GPS Heading
   sprite.setCursor(5, sprite.height() - 2 * (charHeight_size2_for_status + bottomMargin)); // Two lines up from bottom
