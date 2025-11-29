@@ -29,7 +29,7 @@ void loop() {
   tone(PIEZO_PIN, 1000);
 
   // Keep the tone playing for 100 milliseconds.
-  delay(100);
+  delay(1000);
 
   // Stop the tone.
   noTone(PIEZO_PIN);
