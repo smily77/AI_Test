@@ -109,8 +109,7 @@ void setup() {
   // Set up HardwareSerial for GPS
   // Using GPS_RX_PIN (8) as ESP32's RX and GPS_TX_PIN (7) as ESP32's TX.
   // This aligns with user feedback that data from GPS comes in on GPIO 8.
-  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...
-", GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD_RATE); // Log new RX/TX assignments
+  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...\n", GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD_RATE); // Log new RX/TX assignments
   GPS_Serial.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
   Serial.println("OK");
 
