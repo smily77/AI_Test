@@ -256,7 +256,6 @@ void loop() {
     sprite.printf("GPS:FIX (%dSats)  ", gps.satellites.value()); // Shortened string for setTextSize(2)
   } else {
     sprite.printf("GPS:NOFIX (%dSats) ", gps.satellites.value()); // Shortened string for setTextSize(2)
-  n}
 
   // Display current headings for numerical comparison (bottom section)
   // BNO Heading and GPS Heading will use setTextSize(2) for better readability
