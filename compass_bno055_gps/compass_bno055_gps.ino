@@ -18,7 +18,7 @@
 #include <TinyGPSPlus.h>   // For GPS data parsing
 
 // Include the display configuration for your specific ESP32-S3 TFT
-// This header is expected to define and configure an LGFX object (e.g., LGFX lcd;)
+// This header is expected to define and configure an LGFX object class.
 // IMPORTANT: Ensure this file is present in your sketch folder or correctly configured.
 #include <CYD_Display_Config.h>
 
@@ -51,8 +51,9 @@
 // --- Global Objects ---
 
 // LovyanGFX display object.
-// Assuming `lcd` is instantiated in `CYD_Display_Config.h` as is common for pre-configured boards.
-extern LGFX lcd;
+// The `CYD_Display_Config.h` typically defines the `LGFX` class tailored for the board.
+// We then instantiate a global `lcd` object of that class here.
+LGFX lcd; // Corrected: Removed 'extern' to define the lcd object
 
 // Sprite object for flicker-free drawing, leveraging PSRAM if available
 LGFX_Sprite sprite(&lcd);
