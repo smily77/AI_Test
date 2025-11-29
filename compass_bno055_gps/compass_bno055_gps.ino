@@ -19,6 +19,7 @@
 
 // Include the display configuration for your specific ESP32-S3 TFT
 // This header is expected to define and configure an LGFX object (e.g., LGFX lcd;)
+// IMPORTANT: Ensure this file is present in your sketch folder or correctly configured.
 #include <CYD_Display_Config.h>
 
 // --- Pin and Hardware Definitions ---
@@ -29,14 +30,14 @@
 // IMPORTANT: For UART communication, the ESP32's RX pin (data input) should connect to the GPS module's TX pin (data output),
 // and the ESP32's TX pin (data output) should connect to the GPS module's RX pin (data input).
 //
-// User feedback indicates: "Richtig ist an 8 kommen die Daten vom GPS." (Correct is that data from GPS comes in on 8.)
-// This means ESP32's Serial1 RX pin must be GPIO 8.
+// User has confirmed that GPIO 8 (RX) and GPIO 7 (TX) are the correct and working pins for their specific
+// ESP32-S3 board configuration for GPS communication.
 //
-// Therefore, the wiring and ESP32 pin definitions should be:
+// Wiring:
 //   - ESP32 GPIO 8 (configured as Serial1 RX)  <--  GPS module's TX (data output)
 //   - ESP32 GPIO 7 (configured as Serial1 TX)  -->  GPS module's RX (data input)
-#define GPS_RX_PIN 8 // This ESP32 pin is configured as Serial1's RX (receives data from GPS TX)
-#define GPS_TX_PIN 7 // This ESP32 pin is configured as Serial1's TX (transmits data to GPS RX)
+#define GPS_RX_PIN 8 // ESP32 pin for Serial1 RX (receives data from GPS TX)
+#define GPS_TX_PIN 7 // ESP32 pin for Serial1 TX (transmits data to GPS RX)
 #define GPS_BAUD_RATE 9600
 
 // BNO055 IMU:
@@ -49,8 +50,9 @@
 
 // --- Global Objects ---
 
-// Display object (initialized by CYD_Display_Config.h, just declare it here)
-LGFX lcd;
+// LovyanGFX display object.
+// Assuming `lcd` is instantiated in `CYD_Display_Config.h` as is common for pre-configured boards.
+extern LGFX lcd;
 
 // Sprite object for flicker-free drawing, leveraging PSRAM if available
 LGFX_Sprite sprite(&lcd);
@@ -63,7 +65,9 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, BNO_I2C_ADDRESS);
 TinyGPSPlus gps;
 
 // HardwareSerial for GPS communication
-HardwareSerial GPS_Serial(1); // Use Serial1, mapping to GPS_RX_PIN and GPS_TX_PIN
+// On ESP32, Serial1 is a pre-instantiated global object for UART1.
+// We will use Serial1 directly instead of creating a new HardwareSerial instance.
+// HardwareSerial GPS_Serial(1); // REMOVED: Replaced by direct use of Serial1
 
 // --- Display Parameters ---
 int compassCenterX;
@@ -81,7 +85,7 @@ int pointerLength;
 // --- Setup Function ---
 void setup() {
   Serial.begin(115200); // Initialize serial for debugging
-  while (!Serial); // Wait for Serial Monitor to open
+  while (!Serial); // Wait for Serial Monitor to open (useful during development)
   Serial.println("ESP32-S3 Compass & GPS Display Starting...");
 
   // Initialize I2C for BNO055
@@ -93,8 +97,7 @@ void setup() {
   Serial.print("Initializing BNO055...");
   if (!bno.begin()) {
     Serial.println("Ooops, no BNO055 detected ... Check wiring or I2C address!");
-    // Attempt to initialize display to show error message
-    // This part still uses lcd directly as sprite might not be fully set up yet
+    // Attempt to initialize display to show error message even if BNO failed
     lcd.init();
     lcd.setRotation(0);
     lcd.fillScreen(TFT_BLACK);
@@ -106,11 +109,12 @@ void setup() {
   Serial.println("OK");
   bno.setExtCrystalUse(true); // Use external crystal for better accuracy
 
-  // Set up HardwareSerial for GPS
+  // Set up HardwareSerial for GPS using the global Serial1 object
   // Using GPS_RX_PIN (8) as ESP32's RX and GPS_TX_PIN (7) as ESP32's TX.
-  // This aligns with user feedback that data from GPS comes in on GPIO 8.
-  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...\n", GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD_RATE); // Log new RX/TX assignments
-  GPS_Serial.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+  // These pins are confirmed by the user to be the correct setup for their board.
+  Serial.printf("Initializing GPS (Serial1 on RX P%d, TX P%d with %d Baud)...
+", GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD_RATE);
+  Serial1.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN); // Use Serial1 directly
   Serial.println("OK");
 
   // Initialize the TFT display
@@ -130,7 +134,7 @@ void setup() {
 
   // Set initial text properties for the sprite
   sprite.setTextColor(TFT_TEXT_COLOR, TFT_BG_COLOR); // Set text color to green with black background
-  sprite.setTextSize(2); // Changed to text size 2 for initial messages for better readability
+  sprite.setTextSize(2); // Set initial text size for better readability
 
   // Calculate compass drawing parameters based on display dimensions
   // The compass radius is reduced to make space for larger cardinal direction text (N, E, S, W).
@@ -158,9 +162,14 @@ void setup() {
 void loop() {
   // --- GPS Data Processing ---
   // Read any available data from the GPS module and feed it to TinyGPSPlus
-  while (GPS_Serial.available() > 0) {
-    gps.encode(GPS_Serial.read());
+  while (Serial1.available() > 0) { // Use Serial1 directly
+    char gpsChar = Serial1.read(); // Use Serial1 directly
+    // Uncomment the line below to debug raw GPS data. This helps confirm if data is being received.
+    // Serial.print(gpsChar);
+    gps.encode(gpsChar);
   }
+  // Uncomment the line below if you enabled Serial.print(gpsChar) above for better readability.
+  // Serial.println();
 
   // --- BNO055 Data Reading ---
   sensors_event_t event;
@@ -183,16 +192,20 @@ void loop() {
 
   // --- Display Update ---
   // Clear the entire sprite for each update to prevent ghosting of old pointers/text.
-  sprite.fillScreen(TFT_BG_COLOR); // Clear entire sprite
+  sprite.fillScreen(TFT_BG_COLOR);
+
+  // Set default text size and retrieve font metrics once per loop for efficiency.
+  sprite.setTextSize(2);
+  int charHeight_size2 = sprite.fontHeight(); // Get font height for size 2 once per loop
+  int statusLineHeight_size2 = charHeight_size2 + 2; // Height for size 2 text + small inter-line margin
+  int bottomMargin = 5; // Margin from the bottom of the screen
 
   // Draw Compass Rose
   sprite.drawCircle(compassCenterX, compassCenterY, compassRadius, TFT_COMPASS_COLOR);
 
-  // Draw cardinal points (N, E, S, W) - Text size increased for readability
-  sprite.setTextSize(2);
-  sprite.setTextColor(TFT_COMPASS_COLOR);
-  int charHeight_size2 = sprite.fontHeight(); // Get height of current font (size 2)
-  int cardinalMargin = 5; // Small margin for cardinal points from the circle edge
+  // Draw cardinal points (N, E, S, W)
+  sprite.setTextColor(TFT_COMPASS_COLOR); // Set color for cardinal points
+  int cardinalMargin = 5;
 
   // N: Centered above the circle
   int nWidth = sprite.textWidth("N");
@@ -217,9 +230,8 @@ void loop() {
   sprite.drawLine(compassCenterX, compassCenterY, bno_endX, bno_endY, TFT_BNO_COLOR);
   sprite.fillCircle(bno_endX, bno_endY, 5, TFT_BNO_COLOR); // Small circle at pointer tip
 
-  // Label for BNO pointer - Text size increased for readability
-  sprite.setTextSize(2);
-  sprite.setTextColor(TFT_BNO_COLOR);
+  // Label for BNO pointer
+  sprite.setTextColor(TFT_BNO_COLOR); // Set color for BNO label
   // Adjust label position dynamically based on pointer direction
   int bnoLabelWidth = sprite.textWidth("BNO");
   sprite.setCursor(bno_endX + (bno_endX > compassCenterX ? 8 : -(bnoLabelWidth + 8)), bno_endY); // Adjusted offset
@@ -240,9 +252,8 @@ void loop() {
     sprite.drawLine(compassCenterX, compassCenterY, gps_endX, gps_endY, TFT_GPS_COLOR);
     sprite.fillCircle(gps_endX, gps_endY, 5, TFT_GPS_COLOR); // Small circle at pointer tip
 
-    // Label for GPS pointer - Text size increased for readability
-    sprite.setTextSize(2);
-    sprite.setTextColor(TFT_GPS_COLOR);
+    // Label for GPS pointer
+    sprite.setTextColor(TFT_GPS_COLOR); // Set color for GPS label
     // Adjust label position dynamically based on pointer direction
     int gpsLabelWidth = sprite.textWidth("GPS");
     sprite.setCursor(gps_endX + (gps_endX > compassCenterX ? 8 : -(gpsLabelWidth + 8)), gps_endY + 15); // Adjusted offset
@@ -250,29 +261,23 @@ void loop() {
   }
 
   // --- Display Status Information ---
-  // BNO055 Calibration Status (top section) - MODIFIED to setTextSize(2) and shortened string to fit line length
-  sprite.setTextSize(2); // Increased text size as requested
-  sprite.setTextColor(TFT_TEXT_COLOR);
-  int statusLineHeight_size2 = sprite.fontHeight() + 2; // Height for size 2 text + small inter-line margin
-  sprite.setCursor(5, 5); // First line from the top
-  sprite.printf("BNO:S%d G%d A%d M%d  ", sys, gyro, accel, mag); // Shortened string for setTextSize(2)
+  sprite.setTextColor(TFT_TEXT_COLOR); // Set color for general status text
 
-  // GPS Fix Status and Satellites (second line from top) - MODIFIED to setTextSize(2) and shortened string to fit line length
+  // BNO055 Calibration Status (top section)
+  sprite.setCursor(5, 5); // First line from the top
+  sprite.printf("BNO:S%d G%d A%d M%d  ", sys, gyro, accel, mag); // Shortened string to fit line length
+
+  // GPS Fix Status and Satellites (second line from top)
   sprite.setCursor(5, 5 + statusLineHeight_size2);
   if (gps.location.isValid()) {
-    sprite.printf("GPS:FIX (%dSats)  ", gps.satellites.value()); // Shortened string for setTextSize(2)
+    sprite.printf("GPS:FIX (%dSats)  ", gps.satellites.value()); // Shortened string to fit line length
   } else {
-    sprite.printf("GPS:NOFIX (%dSats) ", gps.satellites.value()); // Shortened string for setTextSize(2)
+    sprite.printf("GPS:NOFIX (%dSats) ", gps.satellites.value()); // Shortened string to fit line length
   }
-  // Display current headings for numerical comparison (bottom section)
-  // BNO Heading and GPS Heading will use setTextSize(2) for better readability
-  sprite.setTextSize(2); // Text size remains 2 as it was already
-  sprite.setTextColor(TFT_TEXT_COLOR);
-  int charHeight_size2_for_status = sprite.fontHeight(); // Height for size 2 text
-  int bottomMargin = 5; // Margin from the bottom of the screen
 
+  // Display current headings for numerical comparison (bottom section)
   // GPS Heading at the very bottom
-  sprite.setCursor(5, sprite.height() - (charHeight_size2_for_status + bottomMargin)); // Position relative to bottom
+  sprite.setCursor(5, sprite.height() - (charHeight_size2 + bottomMargin)); // Position relative to bottom
   if (gps.course.isValid()) {
     sprite.printf("GPS Hdg: %0.1f deg  ", gps_heading);
   } else {
@@ -280,7 +285,7 @@ void loop() {
   }
 
   // BNO Heading above GPS Heading
-  sprite.setCursor(5, sprite.height() - 2 * (charHeight_size2_for_status + bottomMargin)); // Two lines up from bottom
+  sprite.setCursor(5, sprite.height() - 2 * (charHeight_size2 + bottomMargin)); // Two lines up from bottom
   sprite.printf("BNO Hdg: %0.1f deg  ", bno_heading);
 
   // Push the entire sprite to the actual display, updating the screen in one go
