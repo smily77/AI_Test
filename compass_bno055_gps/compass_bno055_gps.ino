@@ -28,7 +28,7 @@
 // GPS TX (data output) -> ESP32 RX (Pin 8)
 // GPS RX (data input) <- ESP32 TX (Pin 7, as updated)
 #define GPS_RX_PIN 8
-#define GPS_TX_PIN 7 // Updated from 9 to 7 as requested
+#define GPS_TX_PIN 7
 #define GPS_BAUD_RATE 9600
 
 // BNO055 IMU:
@@ -84,7 +84,7 @@ void setup() {
     Serial.println("Ooops, no BNO055 detected ... Check wiring or I2C address!");
     // Attempt to initialize display to show error message
     lcd.init();
-    lcd.setRotation(0); // Changed to portrait mode
+    lcd.setRotation(0);
     lcd.fillScreen(TFT_BLACK);
     lcd.setTextColor(TFT_RED);
     lcd.setCursor(0, 0);
@@ -144,8 +144,9 @@ void loop() {
 
   // Adjust BNO055 heading for upside-down mounting:
   // If the sensor is mounted upside down, its reported yaw will be 180 degrees off
-  // relative to a "correct" orientation. Add 180 degrees and normalize to 0-360.
-  bno_heading = fmod((bno_heading + 180.0), 360.0);
+  // AND its rotation direction will be reversed. The formula (180 - original_yaw) 
+  // correctly handles both the 180-degree offset and the reversal of direction.
+  bno_heading = fmod((180.0 - bno_heading), 360.0); // Corrected line
   if (bno_heading < 0) bno_heading += 360.0; // Ensure positive angle [0, 360)
 
   // Get BNO055 calibration status
