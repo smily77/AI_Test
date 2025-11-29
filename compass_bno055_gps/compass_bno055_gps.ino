@@ -113,10 +113,12 @@ void setup() {
   Serial.println("OK");
 
   // Initialize the sprite for flicker-free drawing
-  // Create sprite with full screen dimensions
+  // Create sprite with full screen dimensions. LovyanGFX will automatically try to use PSRAM
+  // if LGFX_USE_PSRAM is defined in CYD_Display_Config.h or similar config.
   sprite.createSprite(lcd.width(), lcd.height());
-  // Explicitly use PSRAM for the sprite, as requested, for better performance and memory management
-  sprite.usePSRAM(true);
+  // The 'usePSRAM' method does not exist for LGFX_Sprite. PSRAM usage is typically configured
+  // at a lower level or handled automatically by createSprite if PSRAM is enabled.
+  // Removed: sprite.usePSRAM(true);
   sprite.fillScreen(TFT_BG_COLOR); // Clear sprite with background color
 
   // Set initial text properties for the sprite
@@ -254,7 +256,7 @@ void loop() {
     sprite.printf("GPS:FIX (%dSats)  ", gps.satellites.value()); // Shortened string for setTextSize(2)
   } else {
     sprite.printf("GPS:NOFIX (%dSats) ", gps.satellites.value()); // Shortened string for setTextSize(2)
-  }
+  n}
 
   // Display current headings for numerical comparison (bottom section)
   // BNO Heading and GPS Heading will use setTextSize(2) for better readability
