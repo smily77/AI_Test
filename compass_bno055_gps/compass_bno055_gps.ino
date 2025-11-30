@@ -165,7 +165,7 @@ void loop() {
   while (Serial1.available() > 0) { // Use Serial1 directly
     char gpsChar = Serial1.read(); // Use Serial1 directly
     // Uncomment the line below to debug raw GPS data. This helps confirm if data is being received.
-    // Serial.print(gpsChar);
+    Serial.print(gpsChar);
     gps.encode(gpsChar);
   }
   // Uncomment the line below if you enabled Serial.print(gpsChar) above for better readability.
