@@ -94,7 +94,7 @@ void setup() {
   // The Adafruit_BMP280 object 'bmp' uses the global 'Wire' object by default.
   // After 'Wire.begin()' is called, we only need to pass the I2C address to 'bmp.begin()'.
   // The second argument of 'bmp.begin()' is for an optional chip ID, not a TwoWire object pointer.
-  if (!bmp.begin(BMP280_I2C_ADDRESS)) { // Corrected: Removed '&Wire' from here
+  if (!bmp.begin(BMP280_I2C_ADDRESS)) {
     Serial.println("ERROR: Could not find a valid BMP280 sensor, check wiring or address!");
     lcd.setTextSize(1);
     lcd.setTextColor(TFT_RED);
@@ -104,11 +104,11 @@ void setup() {
   Serial.println("BMP280 initialized.");
   // Configure BMP280 sensor settings for optimal readings
   bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     // Operating Mode: Normal
-                  Adafruit_BMP280::SAMPLING_X16,         // Corrected: Use SAMPLING_X16 for Temperature oversampling
-                  Adafruit_BMP280::SAMPLING_X16,            // Corrected: Use SAMPLING_X16 for Pressure oversampling
-                  Adafruit_BMP280::STANDBY_MS_500,   // Standby time: 500ms
-                  Adafruit_BMP280::FILTER_X16,       // IIR filter sampling: x16
-                  Adafruit_BMP280::SPI_3_WIRE);       // Corrected: Use SPI_3_WIRE (enum for 3-wire SPI, irrelevant for I2C but required for correct compilation)
+                  Adafruit_BMP280::SAMPLING_X16,    // Temperature oversampling
+                  Adafruit_BMP280::SAMPLING_X16,    // Pressure oversampling
+                  Adafruit_BMP280::STANDBY_MS_500,  // Standby time: 500ms
+                  Adafruit_BMP280::FILTER_X16,      // IIR filter sampling: x16
+                  Adafruit_BMP280::SPI_3_WIRE_INTERFACE); // Corrected: Use SPI_3_WIRE_INTERFACE (enum for 3-wire SPI, irrelevant for I2C but required for correct compilation)
 
   // --- AHT20 Sensor Initialization ---
   Serial.print("Initializing AHT20...");
