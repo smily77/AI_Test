@@ -1,11 +1,12 @@
 #include <Wire.h>
+#include <Adafruit_GFX.h> // Required for Adafruit GFX font definitions
 
 #include <CYD_Display_Config.h>
 #include <lgfx/v1/panel/Panel_ST7789.hpp>
 #include <lgfx/v1/LGFX_Sprite.hpp>
 #include <LGFX_AUTODETECT.hpp>
 
-// Include fonts for display
+// Include fonts for display (these are typically from Adafruit GFX library)
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold24pt7b.h>
 
