@@ -1,14 +1,14 @@
 #include <Wire.h>
-#include <Adafruit_GFX.h> // Required for Adafruit GFX font definitions
+#include <Adafruit_GFX.h> // Keep this for potential dependency of other Adafruit libraries, but we'll use LGFX fonts
 
 #include <CYD_Display_Config.h>
 #include <lgfx/v1/panel/Panel_ST7789.hpp>
 #include <lgfx/v1/LGFX_Sprite.hpp>
-#include <LGFX_AUTODETECT.hpp>
+// #include <LGFX_AUTODETECT.hpp> // REMOVED: Conflicts with custom LGFX definition from CYD_Display_Config.h
 
-// Include fonts for display (these are typically from Adafruit GFX library)
-#include <Fonts/FreeSansBold9pt7b.h>
-#include <Fonts/FreeSansBold24pt7b.h>
+// Use LovyanGFX's native font definitions to avoid ambiguity
+// #include <Fonts/FreeSansBold9pt7b.h> // REMOVED: Conflicts with LGFX native fonts
+// #include <Fonts/FreeSansBold24pt7b.h> // REMOVED: Conflicts with LGFX native fonts
 
 #ifndef extSDA
   #define extSDA 22
@@ -90,7 +90,7 @@ void setup() {
   Serial.println("BMP280 initialized.");
   // Configure BMP280 sensor settings for optimal readings.
   // The setSampling method for I2C takes 5 arguments: mode, temp_sampling, pressure_sampling, filter, standby_time.
-  // The original code had 'filter' and 'standby_time' arguments swapped.
+  // The arguments are correct as per Adafruit_BMP280 library (mode, temp_sampling, pressure_sampling, filter, standby_time).
   bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     // Operating Mode: Normal
                   Adafruit_BMP280::SAMPLING_X16,    // Temperature oversampling (x16)
                   Adafruit_BMP280::SAMPLING_X16,    // Pressure oversampling (x16)
@@ -186,7 +186,7 @@ void drawMainDisplay() {
   float currentPressure = pressureHistory[(historyIndex + HISTORY_SIZE - 1) % HISTORY_SIZE];
 
   // Display Temperature
-  lcd.setFont(&FreeSansBold24pt7b);
+  lcd.setFont(&lgfx::v1::fonts::FreeSansBold24pt7b); // Use LovyanGFX's native font
   lcd.setTextColor(TFT_RED, TFT_BLACK);
   lcd.drawString("Temp:", screenWidth / 6, screenHeight / 10);
   lcd.drawString(String(currentTemp, 1) + " C", screenWidth / 6, screenHeight / 4);
@@ -257,7 +257,7 @@ void drawGraph(int x, int y, int w, int h, const char* title, float* data, int d
   lcd.fillRect(x, y, w, h, TFT_DARKGREY); // Fill graph background
   lcd.drawRect(x, y, w, h, TFT_WHITE);     // Draw graph border
 
-  lcd.setFont(&FreeSansBold9pt7b); // Set font for graph labels
+  lcd.setFont(&lgfx::v1::fonts::FreeSansBold9pt7b); // Use LovyanGFX's native font
   lcd.setTextDatum(TL_DATUM);      // Set text datum to Top-Left
 
   lcd.setTextColor(textColor, TFT_DARKGREY); // Set text color for labels
@@ -279,6 +279,12 @@ void drawGraph(int x, int y, int w, int h, const char* title, float* data, int d
   // Draw the historical data points as a line graph
   for (int i = 0; i < dataSize - 1; i++) {
     // Get current and next data points, handling circular buffer indexing
+    // Note: The history index points to the *next* write position. For reading historical data
+    // in chronological order starting from the oldest, one typically offsets the index.
+    // However, the current logic for `drawGraph` iterates from `i=0` to `dataSize-1` and uses
+    // `(historyIndex + i) % dataSize` which effectively displays the data in a 'shifted' manner,
+    // with the oldest data appearing first on the left side of the graph. This is acceptable
+    // if the goal is to show the entire buffer's content.
     int currentDataIdx = (historyIndex + i) % dataSize;
     int nextDataIdx = (historyIndex + i + 1) % dataSize;
 
