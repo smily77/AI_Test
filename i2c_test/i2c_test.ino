@@ -17,10 +17,15 @@
 // necessary display hardware configurations in its constructor.
 LGFX lcd; // Declare the LovyanGFX display object globally.
 
-// I2C Pin definitions for ESP32-S3 Dev Board
-// As specified in the user request: SDA on pin 1, SCL on pin 2.
-const int I2C_SDA_PIN = 1;
-const int I2C_SCL_PIN = 2;
+
+// I2C Pins (CYD Standard - external I2C)
+#ifndef extSDA
+#define extSDA 22
+#endif
+
+#ifndef extSCL
+#define extSCL 27
+#endif
 
 // Variable to store the I2C address of the found PCF8574 module.
 // Initialized to -1, indicating that no PCF8574 has been found yet.
@@ -66,8 +71,8 @@ void setup() {
 
     // Initialize the I2C bus with the specified SDA and SCL pins.
     // This should also happen before display init if the display uses I2C for touch.
-    Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
-    Serial.printf("I2C initialized on SDA: %d, SCL: %d\n", I2C_SDA_PIN, I2C_SCL_PIN);
+    Wire.begin(extSDA, extSCL);
+    Serial.printf("I2C initialized on SDA: %d, SCL: %d\n", extSDA, extSCL);
 
     // Initialize the TFT display using the configuration from CYD_Display_Config.h.
     // The 'lcd' object is now instantiated globally as 'LGFX lcd;'
