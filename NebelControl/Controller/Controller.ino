@@ -20,9 +20,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 // ====== ESP-NOW ======
 // Replace the MAC addresses with the real hardware addresses before uploading.
-// The addresses here are placeholders.
+// The controller MAC is fixed; the actor MAC is learned from incoming packets.
 const uint8_t CONTROLLER_MAC[6] = {0x24, 0x6F, 0x28, 0xAA, 0xAA, 0x01};
-const uint8_t ACTOR_MAC[6] = {0x24, 0x6F, 0x28, 0xAA, 0xAA, 0x02};
+uint8_t actorPeerMac[6] = {0x24, 0x6F, 0x28, 0xAA, 0xAA, 0x02};
+bool actorMacKnown = false;
 
 constexpr uint8_t MSG_STATUS = 1;
 constexpr uint8_t MSG_COMMAND = 2;
@@ -88,6 +89,25 @@ void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
   StatusMessage incoming;
   memcpy(&incoming, data, sizeof(StatusMessage));
 
+  // Learn/update the actor MAC from the status source so commands go back reliably.
+  if (info && info->src_addr) {
+    bool macChanged = memcmp(actorPeerMac, info->src_addr, 6) != 0 || !actorMacKnown;
+    if (macChanged) {
+      if (actorMacKnown) {
+        esp_now_del_peer(actorPeerMac);
+      }
+      memcpy(actorPeerMac, info->src_addr, 6);
+
+      esp_now_peer_info_t peerInfo = {};
+      memcpy(peerInfo.peer_addr, actorPeerMac, 6);
+      peerInfo.ifidx = WIFI_IF_STA;
+      peerInfo.channel = 1;
+      peerInfo.encrypt = false;
+      esp_now_add_peer(&peerInfo);
+      actorMacKnown = true;
+    }
+  }
+
   relayOn = incoming.relayOn;
   powerOk = incoming.powerOk;
   linkOk = true;
@@ -120,19 +140,13 @@ void setupEspNow() {
   esp_now_register_send_cb(onSend);
   esp_now_register_recv_cb(onReceive);
 
-  esp_now_peer_info_t peerInfo = {};
-  memcpy(peerInfo.peer_addr, ACTOR_MAC, 6);
-  peerInfo.ifidx = WIFI_IF_STA;
-  peerInfo.channel = 1;
-  peerInfo.encrypt = false;
-  esp_now_add_peer(&peerInfo);
-
   esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
 }
 
 void sendCommand(bool state) {
+  if (!actorMacKnown) return; // wait until we know where to send
   CommandMessage msg{MSG_COMMAND, state};
-  esp_now_send(ACTOR_MAC, reinterpret_cast<uint8_t *>(&msg), sizeof(msg));
+  esp_now_send(actorPeerMac, reinterpret_cast<uint8_t *>(&msg), sizeof(msg));
   lastCommandSentMs = millis();
   lastSentCommandState = state;
 }
