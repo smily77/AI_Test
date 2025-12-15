@@ -5,7 +5,7 @@
 
 // ====== PINS ======
 constexpr uint8_t PIN_RELAY = 10;
-constexpr uint8_t PIN_SENSE = 5; // analog input (voltage divider)
+constexpr uint8_t PIN_SENSE = 4; 
 
 // ====== ESP-NOW ======
 // Replace the MAC addresses with the real hardware addresses before uploading.
@@ -42,8 +42,9 @@ constexpr unsigned long CONTROLLER_TIMEOUT_MS = 5000;
 constexpr int POWER_THRESHOLD_MV = 400;
 
 void updatePower() {
-  int mv = analogReadMilliVolts(PIN_SENSE);
-  powerOk = mv > POWER_THRESHOLD_MV;
+  //int mv = analogReadMilliVolts(PIN_SENSE);
+  //powerOk = mv > POWER_THRESHOLD_MV;
+  powerOk = digitalRead(PIN_SENSE);
 }
 
 void applyRelay(bool on) {
@@ -99,9 +100,7 @@ void setup() {
   pinMode(PIN_RELAY, OUTPUT);
   applyRelay(false);
 
-  analogReadResolution(12);
-  analogSetPinAttenuation(PIN_SENSE, ADC_11db);
-
+  pinMode(PIN_SENSE,INPUT);
   setupEspNow();
 }
 
