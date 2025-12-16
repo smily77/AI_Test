@@ -9,7 +9,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 
-#define DEBUG true
+#define DEBUG false
 
 // ====== PINS ======
 constexpr uint8_t PIN_LED = 6;
