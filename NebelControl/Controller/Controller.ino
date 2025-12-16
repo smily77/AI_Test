@@ -1,3 +1,5 @@
+#include <Streaming.h>
+
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <WiFi.h>
@@ -6,6 +8,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Fonts/FreeSansBold12pt7b.h>
+
+#define DEBUG true
 
 // ====== PINS ======
 constexpr uint8_t PIN_LED = 6;
@@ -53,7 +57,8 @@ constexpr unsigned long COMMAND_INTERVAL_MS = 1000;
 unsigned long lastCommandSentMs = 0;
 
 // ====== BUTTON ======
-bool lastButtonState = HIGH;
+bool lastReading   = HIGH;  // Rohwert letztes Mal
+bool buttonState   = HIGH;  // stabiler, entprellter Zustand
 unsigned long lastDebounceTime = 0;
 constexpr unsigned long DEBOUNCE_DELAY_MS = 40;
 
@@ -144,14 +149,19 @@ void setupEspNow() {
 }
 
 void sendCommand(bool state) {
+  if (DEBUG) Serial << "Send Command Stage 1:   " << state << endl;
   if (!actorMacKnown) return; // wait until we know where to send
   CommandMessage msg{MSG_COMMAND, state};
+  if (DEBUG) Serial << "Send Command Stage 2:   " << msg.desiredRelay << endl;
   esp_now_send(actorPeerMac, reinterpret_cast<uint8_t *>(&msg), sizeof(msg));
   lastCommandSentMs = millis();
   lastSentCommandState = state;
 }
 
 void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  if(DEBUG) Serial << "Serial Ready" << endl;
   pinMode(PIN_LED, OUTPUT);
   pinMode(PIN_BUTTON, INPUT_PULLUP);
 
@@ -159,21 +169,36 @@ void setup() {
   setupEspNow();
 }
 
+
 void handleButton() {
   int reading = digitalRead(PIN_BUTTON);
-  if (reading != lastButtonState) {
+
+  // 1) Rohwert-Änderung? -> Timer neu starten
+  if (reading != lastReading) {
     lastDebounceTime = millis();
   }
 
+  // 2) Wenn lange genug stabil: stabilen Zustand übernehmen
   if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY_MS) {
-    if (reading == LOW && lastButtonState == HIGH) {
-      if (linkOk && powerOk) {
-        desiredRelayState = !relayOn;
-        sendCommand(desiredRelayState);
+
+    // hat sich der stabile Zustand wirklich geändert?
+    if (reading != buttonState) {
+      buttonState = reading;
+
+      // 3) Aktion nur bei "Press" auslösen (LOW = gedrückt)
+      if (buttonState == LOW) {
+        if (DEBUG) Serial << "Button press (debounced)" << endl;
+
+        if (linkOk && powerOk) {
+          desiredRelayState = !relayOn;
+          sendCommand(desiredRelayState);
+        }
       }
     }
   }
-  lastButtonState = reading;
+
+  // 4) Rohwert merken
+  lastReading = reading;
 }
 
 void loop() {
