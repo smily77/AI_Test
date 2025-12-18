@@ -11,6 +11,7 @@
      const char* ssid = "YOUR_WIFI_NAME";
      const char* password = "YOUR_WIFI_PASSWORD";
   3. Upload the code to your M5Stack AtomS3.
+  4. Open the Serial Monitor to view diagnostic messages.
 */
 
 #include <M5AtomS3.h>
@@ -83,7 +84,6 @@ void setup() {
 void loop() {
   if (newDataAvailable) {
     newDataAvailable = false;
-    // Only update display if the value has changed
     if (lastFrame.gridW != lastDisplayedGridW) {
       drawGauge(lastFrame.gridW);
       lastDisplayedGridW = lastFrame.gridW;
@@ -94,19 +94,13 @@ void loop() {
 
 // --- Drawing Functions ---
 
-// Draws the complete gauge with needle and text
 void drawGauge(int32_t gridW) {
-  // Clamp the value to the gauge's min/max
   int32_t displayW = constrain(gridW, -MAX_GRID_W, MAX_GRID_W);
-
-  // Map the grid power to an angle (150 degrees for Export, 30 for Import)
   float angle = map(displayW, -MAX_GRID_W, MAX_GRID_W, 150, 30);
   float angleRad = radians(angle);
 
-  // Don't redraw if the angle hasn't changed
   if (abs(angle - lastAngle) < 1.0) return;
 
-  // Clear previous needle by drawing it in black
   if (lastAngle > -999) {
     float lastAngleRad = radians(lastAngle);
     int x_end_old = GAUGE_CENTER_X + NEEDLE_RADIUS * cos(lastAngleRad);
@@ -114,17 +108,11 @@ void drawGauge(int32_t gridW) {
     M5.Lcd.drawLine(GAUGE_CENTER_X, GAUGE_CENTER_Y, x_end_old, y_end_old, TFT_BLACK);
   }
 
-  // Draw gauge background and arc
   M5.Lcd.fillScreen(TFT_BLACK);
   M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 210, 330, TFT_DARKGREY);
-  
-  // Draw green part for export (left side)
   M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 210, 270, TFT_GREEN);
-  
-  // Draw red part for import (right side)
   M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 270, 330, TFT_RED);
 
-  // Draw labels
   M5.Lcd.setTextDatum(MC_DATUM);
   M5.Lcd.setTextColor(TFT_GREEN);
   M5.Lcd.drawString("Export", GAUGE_CENTER_X - 40, GAUGE_CENTER_Y + 15);
@@ -133,13 +121,11 @@ void drawGauge(int32_t gridW) {
   M5.Lcd.setTextColor(TFT_WHITE);
   M5.Lcd.drawString("0", GAUGE_CENTER_X, GAUGE_CENTER_Y - 45);
 
-  // Draw digital value
   M5.Lcd.setTextFont(4);
   String powerText = String(gridW) + " W";
   M5.Lcd.drawString(powerText, GAUGE_CENTER_X, GAUGE_CENTER_Y + 35);
   M5.Lcd.setTextFont(2);
 
-  // Draw the new needle
   int x_end = GAUGE_CENTER_X + NEEDLE_RADIUS * cos(angleRad);
   int y_end = GAUGE_CENTER_Y - NEEDLE_RADIUS * sin(angleRad);
   M5.Lcd.drawLine(GAUGE_CENTER_X, GAUGE_CENTER_Y, x_end, y_end, TFT_ORANGE);
@@ -166,11 +152,11 @@ void setupWiFi() {
     M5.Lcd.setTextDatum(MC_DATUM);
     M5.Lcd.drawString("WiFi Connected", 64, 80);
     delay(1000);
+    drawGauge(0); // Redraw gauge to clear the "Connected" message
   } else {
     Serial.println("\nWiFi Connection Failed!");
     M5.Lcd.setTextDatum(MC_DATUM);
     M5.Lcd.drawString("WiFi Failed!", 64, 64);
-    // Halt execution if WiFi fails
     while(1);
   }
 }
@@ -179,18 +165,33 @@ void setupUDP() {
   if (udp.listenMulticast(MCAST_GRP, MCAST_PORT)) {
     Serial.println("UDP Listening on port " + String(MCAST_PORT));
     udp.onPacket([](AsyncUDPPacket packet) {
-      // Check if packet size matches the data structure
+      Serial.println("--- UDP Packet Received ---");
+
       if (packet.length() != sizeof(PvFrameV4)) {
+        Serial.print("Error: Invalid packet size. Expected: ");
+        Serial.print(sizeof(PvFrameV4));
+        Serial.print(", Received: ");
+        Serial.println(packet.length());
         return;
       }
+      Serial.println("Packet size is correct.");
       
       PvFrameV4 tempFrame;
       memcpy(&tempFrame, packet.data(), sizeof(PvFrameV4));
       
-      // Check for magic number to validate the frame
       if (tempFrame.magic == PV_MAGIC) {
+        Serial.println("Magic number is correct.");
         memcpy(&lastFrame, &tempFrame, sizeof(PvFrameV4));
         newDataAvailable = true;
+        Serial.print("Success: Frame parsed. Grid Power: ");
+        Serial.println(lastFrame.gridW);
+        Serial.println("--------------------------\n");
+      } else {
+        Serial.print("Error: Invalid magic number. Expected: ");
+        Serial.print(PV_MAGIC, HEX);
+        Serial.print(", Received: ");
+        Serial.println(tempFrame.magic, HEX);
+        Serial.println("--------------------------\n");
       }
     });
   } else {
