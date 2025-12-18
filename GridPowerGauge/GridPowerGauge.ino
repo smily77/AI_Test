@@ -66,7 +66,7 @@ void setupUDP();
 
 // --- Main Setup ---
 void setup() {
-  M5.begin(); // Corrected M5.begin()
+  M5.begin();
   M5.Lcd.setRotation(1);
   M5.Lcd.setTextFont(2);
   M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -116,13 +116,13 @@ void drawGauge(int32_t gridW) {
 
   // Draw gauge background and arc
   M5.Lcd.fillScreen(TFT_BLACK);
-  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 210, 330, TFT_DARKGREY); // Corrected drawArc
+  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 210, 330, TFT_DARKGREY);
   
   // Draw green part for export (left side)
-  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 210, 270, TFT_GREEN); // Corrected drawArc
+  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 210, 270, TFT_GREEN);
   
   // Draw red part for import (right side)
-  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 270, 330, TFT_RED); // Corrected drawArc
+  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 270, 330, TFT_RED);
 
   // Draw labels
   M5.Lcd.setTextDatum(MC_DATUM);
@@ -160,16 +160,14 @@ void setupWiFi() {
     retries++;
   }
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("
-WiFi Connected!"); // Corrected Serial.println
+    Serial.println("\nWiFi Connected!");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
     M5.Lcd.setTextDatum(MC_DATUM);
     M5.Lcd.drawString("WiFi Connected", 64, 80);
     delay(1000);
   } else {
-    Serial.println("
-WiFi Connection Failed!"); // Corrected Serial.println
+    Serial.println("\nWiFi Connection Failed!");
     M5.Lcd.setTextDatum(MC_DATUM);
     M5.Lcd.drawString("WiFi Failed!", 64, 64);
     // Halt execution if WiFi fails
