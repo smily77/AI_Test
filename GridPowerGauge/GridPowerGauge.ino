@@ -6,18 +6,17 @@
   broadcast from a "Poller" device on the local network.
 
   Instructions:
-  1. Fill in your WiFi credentials (ssid and password).
-  2. Upload the code to your M5Stack AtomS3.
+  1. Create a file named 'Credentials.h' in the same directory.
+  2. In 'Credentials.h', define your WiFi credentials like this:
+     const char* ssid = "YOUR_WIFI_NAME";
+     const char* password = "YOUR_WIFI_PASSWORD";
+  3. Upload the code to your M5Stack AtomS3.
 */
 
 #include <M5AtomS3.h>
 #include <WiFi.h>
 #include <AsyncUDP.h>
-
-// --- Configuration ---
-//-!!- IMPORTANT: Replace with your WiFi credentials -!!-
-const char* ssid = "IHR_WLAN_NAME";
-const char* password = "IHR_WLAN_PASSWORT";
+#include <Credentials.h> // Include for WiFi credentials
 
 // UDP Multicast settings (from your pv_batt project)
 const IPAddress MCAST_GRP(239, 12, 12, 12);
