@@ -178,7 +178,6 @@ void setupOTA() {
   WiFi.begin(ssid, password);
 
   if (DEBUG) Serial << "Connecting to WiFi..." << endl;
-  updateDisplay("WiFi...", true);
 
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 30) {
@@ -227,8 +226,21 @@ void setupOTA() {
     updateDisplay("OTA", true);
     if (DEBUG) Serial << "OTA Ready" << endl;
   } else {
-    if (DEBUG) Serial << "WiFi connection failed" << endl;
+    // WiFi connection failed - return to normal operation
+    if (DEBUG) Serial << "WiFi connection failed - returning to normal mode" << endl;
     updateDisplay("WiFi Fail", true);
+    delay(2000);
+
+    // Reset OTA state
+    otaMode = false;
+    otaRequested = false;
+    otaAckReceived = false;
+    otaReady = false;
+
+    // Re-initialize ESP-NOW
+    WiFi.disconnect();
+    setupEspNow();
+    updateDisplay("Ready", true);
   }
 }
 

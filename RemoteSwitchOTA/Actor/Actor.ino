@@ -45,6 +45,7 @@ unsigned long lastControllerMsg = 0;
 // ====== OTA STATE ======
 bool otaMode = false;
 bool otaReady = false;
+bool otaSetupAttempted = false;
 
 // ====== TIMING ======
 constexpr unsigned long STATUS_INTERVAL_MS = 1000;
@@ -96,6 +97,7 @@ void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
     sendOtaAck();
     // Enter OTA mode
     otaMode = true;
+    otaSetupAttempted = false;
   }
 }
 
@@ -178,7 +180,17 @@ void setupOTA() {
     otaReady = true;
     if (DEBUG) Serial.println("OTA Ready");
   } else {
-    if (DEBUG) Serial.println("\nWiFi connection failed");
+    // WiFi connection failed - return to normal operation
+    if (DEBUG) Serial.println("\nWiFi connection failed - returning to normal mode");
+
+    // Reset OTA state
+    otaMode = false;
+    otaReady = false;
+    otaSetupAttempted = false;
+
+    // Re-initialize ESP-NOW
+    WiFi.disconnect();
+    setupEspNow();
   }
 }
 
@@ -200,13 +212,16 @@ void setup() {
 void loop() {
   if (otaMode) {
     // OTA Mode handling
-    if (!otaReady) {
+    if (!otaReady && !otaSetupAttempted) {
       // Setup OTA if not already done
+      otaSetupAttempted = true;
       setupOTA();
-    } else {
+    } else if (otaReady) {
       // Handle OTA updates
       ArduinoOTA.handle();
     }
+    // If otaSetupAttempted but not otaReady, setupOTA() failed and reset everything
+    // We'll return to normal operation automatically
     return;
   }
 
