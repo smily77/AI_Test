@@ -1,56 +1,59 @@
+
+// Board configuration for CYD
+#define USER_SETUP_LOADED
+#define ILI9341_DRIVER
+#define TFT_WIDTH 240
+#define TFT_HEIGHT 320
+#define TFT_MISO -1
+#define TFT_MOSI 23
+#define TFT_SCLK 18
+#define TFT_CS 5
+#define TFT_DC 2
+#define TFT_RST 4
+#define TFT_BL 22
+#define PIN_TOUCH_CS 21
+#define PIN_TOUCH_IRQ 36
+#define TOUCH_MOSI 32
+#define TOUCH_MISO 35
+#define TOUCH_SCLK 25
+#define LOAD_GLCD
+#define LOAD_FONT2
+#define LOAD_FONT4
+#define LOAD_FONT6
+#define LOAD_FONT7
+#define LOAD_FONT8
+#define LOAD_GFXFF
+#define SMOOTH_FONT
+
 #include <TFT_eSPI.h>
+#include <SPI.h>
 
-static TFT_eSPI tft;
-
-static inline uint16_t color565(uint8_t r, uint8_t g, uint8_t b) {
-  return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
-}
-
-static void drawGradientColumn(int16_t x, int16_t width,
-                                uint8_t startR, uint8_t startG, uint8_t startB,
-                                uint8_t endR, uint8_t endG, uint8_t endB) {
-  const int16_t height = tft.height();
-  for (int16_t y = 0; y < height; ++y) {
-    float ratio = (height <= 1) ? 0.0f : static_cast<float>(y) / (height - 1);
-    uint8_t r = startR + static_cast<uint8_t>((endR - startR) * ratio);
-    uint8_t g = startG + static_cast<uint8_t>((endG - startG) * ratio);
-    uint8_t b = startB + static_cast<uint8_t>((endB - startB) * ratio);
-    uint16_t color = color565(r, g, b);
-    tft.drawFastHLine(x, y, width, color);
-  }
-}
+TFT_eSPI tft = TFT_eSPI();
 
 void setup() {
-  Serial.begin(115200);
-  Serial.println("CYD TFT_eSPI gradient comparison");
-
+  tft.begin();
+  tft.setRotation(0);
+  tft.fillScreen(TFT_BLACK);
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH);
 
-  tft.init();
-  tft.setRotation(0);  // Portrait
-  tft.fillScreen(TFT_BLACK);
-
-  const int16_t width = tft.width();
-  const int16_t columnWidth = width / 3;
-  int16_t x = 0;
-
-  drawGradientColumn(x, columnWidth,
-                     255, 200, 200,
-                     60, 0, 0);
-  x += columnWidth;
-
-  drawGradientColumn(x, columnWidth,
-                     200, 255, 200,
-                     0, 60, 0);
-  x += columnWidth;
-
-  drawGradientColumn(x, width - x,
-                     200, 200, 255,
-                     0, 0, 60);
-
-  Serial.println("Gradients drawn.");
+  drawGradient(0, 0, tft.width(), tft.height());
 }
 
 void loop() {
+  // Empty
+}
+
+void drawGradient(int16_t x, int16_t y, int16_t w, int16_t h) {
+  // Dark blue to light blue gradient
+  uint8_t startR = 0, startG = 0, startB = 50;
+  uint8_t endR = 173, endG = 216, endB = 230; // LightBlue
+
+  for (int16_t i = 0; i < h; i++) {
+    float ratio = (float)i / (h - 1);
+    uint8_t r = startR + (endR - startR) * ratio;
+    uint8_t g = startG + (endG - startG) * ratio;
+    uint8_t b = startB + (endB - startB) * ratio;
+    tft.drawFastHLine(x, y + i, w, tft.color565(r, g, b));
+  }
 }
