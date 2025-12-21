@@ -19,6 +19,12 @@ constexpr uint8_t PIN_BUTTON = 7; // active LOW
 constexpr uint8_t PIN_SDA = 8;
 constexpr uint8_t PIN_SCL = 9;
 
+// ====== LED PWM ======
+constexpr uint8_t LED_PWM_CHANNEL = 0;
+constexpr uint32_t LED_PWM_FREQ = 5000;
+constexpr uint8_t LED_PWM_RESOLUTION = 8;  // 8-bit: 0-255
+constexpr uint8_t LED_BRIGHTNESS = 102;    // 40% of 255
+
 // ====== DISPLAY ======
 constexpr uint8_t SCREEN_WIDTH = 128;
 constexpr uint8_t SCREEN_HEIGHT = 32;
@@ -265,7 +271,12 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   if(DEBUG) Serial << "Serial Ready" << endl;
-  pinMode(PIN_LED, OUTPUT);
+
+  // Setup LED PWM
+  ledcSetup(LED_PWM_CHANNEL, LED_PWM_FREQ, LED_PWM_RESOLUTION);
+  ledcAttachPin(PIN_LED, LED_PWM_CHANNEL);
+  ledcWrite(LED_PWM_CHANNEL, 0);  // Start with LED off
+
   pinMode(PIN_BUTTON, INPUT_PULLUP);
 
   setupDisplay();
@@ -366,10 +377,10 @@ void loop() {
       sendCommand(desiredRelayState);
     }
 
-    digitalWrite(PIN_LED, relayOn ? HIGH : LOW);
+    ledcWrite(LED_PWM_CHANNEL, relayOn ? LED_BRIGHTNESS : 0);
     updateDisplay(relayOn ? "On" : "Ready", true);
   } else {
-    digitalWrite(PIN_LED, LOW);
+    ledcWrite(LED_PWM_CHANNEL, 0);
     bool showText = digitalRead(PIN_BUTTON) == LOW;
     if (showText) {
       if (!linkOk) {
