@@ -20,7 +20,6 @@ constexpr uint8_t PIN_SDA = 8;
 constexpr uint8_t PIN_SCL = 9;
 
 // ====== LED PWM ======
-constexpr uint8_t LED_PWM_CHANNEL = 0;
 constexpr uint32_t LED_PWM_FREQ = 5000;
 constexpr uint8_t LED_PWM_RESOLUTION = 8;  // 8-bit: 0-255
 constexpr uint8_t LED_BRIGHTNESS = 102;    // 40% of 255
@@ -272,10 +271,9 @@ void setup() {
   delay(1000);
   if(DEBUG) Serial << "Serial Ready" << endl;
 
-  // Setup LED PWM
-  ledcSetup(LED_PWM_CHANNEL, LED_PWM_FREQ, LED_PWM_RESOLUTION);
-  ledcAttachPin(PIN_LED, LED_PWM_CHANNEL);
-  ledcWrite(LED_PWM_CHANNEL, 0);  // Start with LED off
+  // Setup LED PWM (using new ESP32 Arduino Core 3.x API)
+  ledcAttach(PIN_LED, LED_PWM_FREQ, LED_PWM_RESOLUTION);
+  ledcWrite(PIN_LED, 0);  // Start with LED off
 
   pinMode(PIN_BUTTON, INPUT_PULLUP);
 
@@ -377,10 +375,10 @@ void loop() {
       sendCommand(desiredRelayState);
     }
 
-    ledcWrite(LED_PWM_CHANNEL, relayOn ? LED_BRIGHTNESS : 0);
+    ledcWrite(PIN_LED, relayOn ? LED_BRIGHTNESS : 0);
     updateDisplay(relayOn ? "On" : "Ready", true);
   } else {
-    ledcWrite(LED_PWM_CHANNEL, 0);
+    ledcWrite(PIN_LED, 0);
     bool showText = digitalRead(PIN_BUTTON) == LOW;
     if (showText) {
       if (!linkOk) {
