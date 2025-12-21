@@ -22,7 +22,8 @@ constexpr uint8_t PIN_SCL = 9;
 // ====== LED PWM ======
 constexpr uint32_t LED_PWM_FREQ = 5000;
 constexpr uint8_t LED_PWM_RESOLUTION = 8;  // 8-bit: 0-255
-constexpr uint8_t LED_BRIGHTNESS = 102;    // 40% of 255
+constexpr uint8_t LED_BRIGHTNESS_PERCENT = 20;  // LED brightness in %
+constexpr uint8_t LED_BRIGHTNESS = (LED_BRIGHTNESS_PERCENT * 255) / 100;  // PWM value (20% = 51)
 
 // ====== DISPLAY ======
 constexpr uint8_t SCREEN_WIDTH = 128;
