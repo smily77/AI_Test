@@ -91,18 +91,23 @@ void loop() {
 
 // Draws the static parts of the gauge once.
 void drawGaugeLayout() {
-  // Draw the arcs for export (green) and import (red)
-  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 210, 270, TFT_GREEN); // Export range
-  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS-2, 270, 330, TFT_RED);   // Import range
+  // Draw the arcs: Import (Red) on the left, Export (Green) on the right.
+  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS - 2, 90, 210, TFT_RED);   // Import range (left)
+  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS - 2, -30, 90, TFT_GREEN); // Export range (right)
 
   // Draw text labels
   M5.Lcd.setTextFont(2);
   M5.Lcd.setTextDatum(MC_DATUM);
-  M5.Lcd.setTextColor(TFT_GREEN);
-  M5.Lcd.drawString("Export", GAUGE_CENTER_X - 40, GAUGE_CENTER_Y + 15);
-  M5.Lcd.setTextColor(TFT_RED);
-  M5.Lcd.drawString("Import", GAUGE_CENTER_X + 40, GAUGE_CENTER_Y + 15);
   
+  // "Import" label on the left, color RED
+  M5.Lcd.setTextColor(TFT_RED);
+  M5.Lcd.drawString("Import", GAUGE_CENTER_X - 40, GAUGE_CENTER_Y + 15);
+  
+  // "Export" label on the right, color GREEN
+  M5.Lcd.setTextColor(TFT_GREEN);
+  M5.Lcd.drawString("Export", GAUGE_CENTER_X + 40, GAUGE_CENTER_Y + 15);
+  
+  // Other labels
   M5.Lcd.setTextColor(TFT_WHITE);
   M5.Lcd.drawString("0", GAUGE_CENTER_X, GAUGE_CENTER_Y - 45);
   String max_kw = String(MAX_GRID_W/1000) + "kW";
@@ -128,7 +133,7 @@ void updateGaugeData(int32_t gridW) {
   M5.Lcd.fillRect(GAUGE_CENTER_X - 60, GAUGE_CENTER_Y + 22, 120, 30, TFT_BLACK);
 
   // --- 2. Draw new dynamic elements ---
-  // Calculate new needle angle
+  // Calculate new needle angle. Negative gridW (Import) is on the left, Positive (Export) on the right.
   int32_t displayW = constrain(gridW, -MAX_GRID_W, MAX_GRID_W);
   float angle = map(displayW, -MAX_GRID_W, MAX_GRID_W, 210, -30);
 
