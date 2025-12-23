@@ -135,8 +135,8 @@ void drawGauge(int32_t gridW) {
   M5.Lcd.drawString("Import", GAUGE_CENTER_X + 40, GAUGE_CENTER_Y + 15);
   M5.Lcd.setTextColor(TFT_WHITE);
   M5.Lcd.drawString("0", GAUGE_CENTER_X, GAUGE_CENTER_Y - 45);
-  M5.Lcd.drawString(String(MAX_GRID_W/1000)+'''kW''', GAUGE_CENTER_X - 50, GAUGE_CENTER_Y - 25);
-  M5.Lcd.drawString(String(MAX_GRID_W/1000)+'''kW''', GAUGE_CENTER_X + 50, GAUGE_CENTER_Y - 25);
+  M5.Lcd.drawString(String(MAX_GRID_W/1000)+"kW", GAUGE_CENTER_X - 50, GAUGE_CENTER_Y - 25);
+  M5.Lcd.drawString(String(MAX_GRID_W/1000)+"kW", GAUGE_CENTER_X + 50, GAUGE_CENTER_Y - 25);
 
   M5.Lcd.setTextFont(4);
   String powerText = String(gridW) + " W";
