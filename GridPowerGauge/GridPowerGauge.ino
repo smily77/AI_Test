@@ -5,7 +5,7 @@
   as a gauge on the M5Stack AtomS3 display. It receives data via UDP
   multicast from a "Poller" device on the local network.
 
-  Improved drawing logic to prevent flickering and artifacts.
+  This version uses a manual, pixel-by-pixel arc drawing method for robustness.
 */
 
 #include <M5AtomS3.h>
@@ -59,14 +59,12 @@ void setup() {
   M5.begin();
   Serial.begin(115200);
   delay(100);
-  Serial.println("Serial Monitor started.");
 
   M5.Lcd.setRotation(1);
   M5.Lcd.fillScreen(TFT_BLACK);
   M5.Lcd.setTextDatum(MC_DATUM);
   M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
   M5.Lcd.drawString("Connecting to WiFi...", 64, 64);
-  Serial.println("Attempting WiFi connection...");
 
   setupWiFi();
   
@@ -75,7 +73,6 @@ void setup() {
   updateGaugeData(0); // Draw initial data
 
   setupUDP();
-  Serial.println("Setup complete. Waiting for UDP data.");
 }
 
 // --- Main Loop ---
@@ -89,39 +86,49 @@ void loop() {
 
 // --- Drawing Functions ---
 
-// Draws the static parts of the gauge once.
+// Draws the static parts of the gauge once. This version draws the arcs manually.
 void drawGaugeLayout() {
-  // Corrected Arc Drawing Logic
-  // Import Arc (RED): From 210 (left) clockwise to 90 (top).
-  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS - 2, 210, 90, TFT_RED);
-  // Export Arc (GREEN): From 90 (top) clockwise to -30 (right).
-  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS - 2, 90, -30, TFT_GREEN);
+  // Draw RED (Import) Arc - Left side (90 to 210 degrees)
+  for (int i = 90; i <= 210; i++) {
+    float angleRad = radians(i);
+    int x1 = GAUGE_CENTER_X + (GAUGE_RADIUS - 1) * cos(angleRad);
+    int y1 = GAUGE_CENTER_Y - (GAUGE_RADIUS - 1) * sin(angleRad);
+    int x2 = GAUGE_CENTER_X + GAUGE_RADIUS * cos(angleRad);
+    int y2 = GAUGE_CENTER_Y - GAUGE_RADIUS * sin(angleRad);
+    M5.Lcd.drawLine(x1, y1, x2, y2, TFT_RED);
+  }
+
+  // Draw GREEN (Export) Arc - Right side (-30 to 90 degrees)
+  for (int i = -30; i <= 90; i++) {
+    float angleRad = radians(i);
+    int x1 = GAUGE_CENTER_X + (GAUGE_RADIUS - 1) * cos(angleRad);
+    int y1 = GAUGE_CENTER_Y - (GAUGE_RADIUS - 1) * sin(angleRad);
+    int x2 = GAUGE_CENTER_X + GAUGE_RADIUS * cos(angleRad);
+    int y2 = GAUGE_CENTER_Y - GAUGE_RADIUS * sin(angleRad);
+    M5.Lcd.drawLine(x1, y1, x2, y2, TFT_GREEN);
+  }
 
   // Draw text labels
   M5.Lcd.setTextFont(2);
   M5.Lcd.setTextDatum(MC_DATUM);
   
-  // "Import" label on the left, color RED
   M5.Lcd.setTextColor(TFT_RED);
   M5.Lcd.drawString("Import", GAUGE_CENTER_X - 40, GAUGE_CENTER_Y + 15);
   
-  // "Export" label on the right, color GREEN
   M5.Lcd.setTextColor(TFT_GREEN);
   M5.Lcd.drawString("Export", GAUGE_CENTER_X + 40, GAUGE_CENTER_Y + 15);
   
-  // Other labels
   M5.Lcd.setTextColor(TFT_WHITE);
   M5.Lcd.drawString("0", GAUGE_CENTER_X, GAUGE_CENTER_Y - 45);
   String max_kw = String(MAX_GRID_W/1000) + "kW";
-  M5.Lcd.drawString(max_kw, GAUGE_CENTER_X - 50, GAUGE_CENTER_Y - 25);
-  M5.Lcd.drawString(max_kw, GAUGE_CENTER_X + 50, GAUGE_CENTER_Y - 25);
+  M5.Lcd.drawString(max_kw, GAUGE_CENTER_X - 55, GAUGE_CENTER_Y - 20);
+  M5.Lcd.drawString(max_kw, GAUGE_CENTER_X + 55, GAUGE_CENTER_Y - 20);
 }
 
 // Updates the dynamic parts of the gauge (needle and text value).
 void updateGaugeData(int32_t gridW) {
   if (gridW == lastDisplayedGridW) return; // No change, no need to redraw
 
-  // --- 1. Erase old dynamic elements ---
   // Erase old needle by drawing it in black
   if (lastAngle > -999) {
     float lastAngleRad = radians(lastAngle);
@@ -130,16 +137,15 @@ void updateGaugeData(int32_t gridW) {
     M5.Lcd.drawLine(GAUGE_CENTER_X, GAUGE_CENTER_Y, x_end_old, y_end_old, TFT_BLACK);
   }
   
-  // Erase old power value text by drawing a black rectangle over it
-  M5.Lcd.setTextFont(4);
+  // Erase old power value text
   M5.Lcd.fillRect(GAUGE_CENTER_X - 60, GAUGE_CENTER_Y + 22, 120, 30, TFT_BLACK);
 
-  // --- 2. Draw new dynamic elements ---
-  // Calculate new needle angle. Negative gridW (Import) is on the left, Positive (Export) on the right.
+  // Calculate new needle angle
   int32_t displayW = constrain(gridW, -MAX_GRID_W, MAX_GRID_W);
   float angle = map(displayW, -MAX_GRID_W, MAX_GRID_W, 210, -30);
 
   // Draw new power value text
+  M5.Lcd.setTextFont(4);
   M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
   M5.Lcd.setTextDatum(MC_DATUM);
   String powerText = String(gridW) + " W";
@@ -150,9 +156,8 @@ void updateGaugeData(int32_t gridW) {
   int x_end = GAUGE_CENTER_X + NEEDLE_RADIUS * cos(angleRad);
   int y_end = GAUGE_CENTER_Y - NEEDLE_RADIUS * sin(angleRad);
   M5.Lcd.drawLine(GAUGE_CENTER_X, GAUGE_CENTER_Y, x_end, y_end, TFT_ORANGE);
-  M5.Lcd.fillCircle(GAUGE_CENTER_X, GAUGE_CENTER_Y, 4, TFT_WHITE); // Needle hub
+  M5.Lcd.fillCircle(GAUGE_CENTER_X, GAUGE_CENTER_Y, 4, TFT_WHITE);
   
-  // --- 3. Store current values for next cycle ---
   lastAngle = angle;
   lastDisplayedGridW = gridW;
 }
@@ -161,23 +166,17 @@ void updateGaugeData(int32_t gridW) {
 void setupWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi");
   int retries = 0;
   while (WiFi.status() != WL_CONNECTED && retries < 30) {
     delay(500);
-    Serial.print(".");
     retries++;
   }
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWiFi Connected!");
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
     M5.Lcd.fillScreen(TFT_BLACK);
     M5.Lcd.setTextDatum(MC_DATUM);
     M5.Lcd.drawString("WiFi Connected!", 64, 64);
     delay(1500);
   } else {
-    Serial.println("\nWiFi Connection Failed!");
     M5.Lcd.fillScreen(TFT_BLACK);
     M5.Lcd.setTextDatum(MC_DATUM);
     M5.Lcd.drawString("WiFi Failed!", 64, 64);
@@ -187,26 +186,15 @@ void setupWiFi() {
 
 void setupUDP() {
   if (udp.listenMulticast(MCAST_GRP, MCAST_PORT)) {
-    Serial.println("UDP Listening on port " + String(MCAST_PORT));
     udp.onPacket([](AsyncUDPPacket packet) {
-      if (packet.length() != sizeof(PvFrameV4)) {
-        Serial.printf("Error: Invalid packet size. Expected: %d, Received: %d\n", sizeof(PvFrameV4), packet.length());
-        return;
-      }
-      
+      if (packet.length() != sizeof(PvFrameV4)) return;
       const PvFrameV4* f = (const PvFrameV4*)packet.data();
       uint16_t check_crc = crc16_modbus((const uint8_t*)f, sizeof(PvFrameV4) - 2);
-
-      if (f->magic != PV_MAGIC || f->version != PV_VERSION || check_crc != f->crc) {
-        Serial.printf("Error: Invalid frame (Magic, Version, or CRC incorrect).\n");
-        return;
-      }
-      
+      if (f->magic != PV_MAGIC || f->version != PV_VERSION || check_crc != f->crc) return;
       memcpy(&lastFrame, f, sizeof(PvFrameV4));
       newDataAvailable = true;
     });
   } else {
-    Serial.println("UDP Listen failed");
     M5.Lcd.fillScreen(TFT_BLACK);
     M5.Lcd.setTextDatum(MC_DATUM);
     M5.Lcd.drawString("UDP Failed!", 64, 64);
