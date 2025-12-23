@@ -92,8 +92,9 @@ void loop() {
 // Draws the static parts of the gauge once.
 void drawGaugeLayout() {
   // Draw the arcs: Import (Red) on the left, Export (Green) on the right.
-  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS - 2, 90, 210, TFT_RED);   // Import range (left)
-  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS - 2, -30, 90, TFT_GREEN); // Export range (right)
+  // Needle travels from 210 deg (left) to -30 deg (right). 90 is top center.
+  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS - 2, 90, 210, TFT_RED);   // Import: 90 (top) to 210 (left)
+  M5.Lcd.drawArc(GAUGE_CENTER_X, GAUGE_CENTER_Y, GAUGE_RADIUS, GAUGE_RADIUS - 2, -30, 90, TFT_GREEN); // Export: -30 (right) to 90 (top)
 
   // Draw text labels
   M5.Lcd.setTextFont(2);
